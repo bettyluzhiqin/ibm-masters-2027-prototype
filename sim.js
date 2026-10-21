@@ -68,10 +68,10 @@ Object.assign(sun.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, n
 
 /* ---------- real course and shot data ----------
    data/meta.js (window.MASTERS_DATA), data/shots.bin and data/terrain.bin are exported from the IBM Masters Data API
-   database (masters.db, release v1.1.3) by export_masters.py: real tees, pins, ~208k shot flights 2017–2026, and a
+   database (masters.db, release v1.1.3) by export_masters.py: real tees, pins, ~230k shot flights 2016–2026, and a
    3 m terrain grid (surface + elevation) rebuilt from where every ball landed. */
 const D = window.MASTERS_DATA, M = window.MASTERS;
-const [RAW, TB] = await Promise.all(["data/shots.bin?v=4", "data/terrain.bin?v=1"].map(async u => (await fetch(u)).arrayBuffer()));
+const [RAW, TB] = await Promise.all(["data/shots.bin?v=5", "data/terrain.bin?v=2"].map(async u => (await fetch(u)).arrayBuffer()));
 const RAWI = new Int16Array(RAW);
 const W = D.fields.length, F = Object.fromEntries(D.fields.map((f, i) => [f, i])), NSHOT = D.count, QN = D.quant;
 
@@ -274,6 +274,14 @@ HOLES.forEach(h => {
   flag.position.set(h.green.x + 0.45, h.green.y + 2.3, h.green.z);
   pins.add(pole, flag);
 });
+// the day's pin: when what is shown is one year and one round, each flag moves to that day's hole location; otherwise the usual spot
+let pinDay = null;
+function placePins(day) {
+  if (day === pinDay) return; pinDay = day;
+  HOLES.forEach((h, i) => { const p = day && D.holes[i].pins[day], x = p ? p[0] : h.green.x, z = p ? p[1] : h.green.z, y = heightAt(x, z);
+    pins.children[2 * i].position.set(x, y + 1.3, z); pins.children[2 * i + 1].position.set(x + 0.45, y + 2.3, z); });
+}
+const dayOf = f => f && f.Year && f.Year[0] === f.Year[1] && f.Round?.length === 1 ? `${f.Year[0]}-${f.Round[0].slice(1)}` : null;
 
 /* hole markers: Carbon tag look (square number block + Gray 100 panel), on a stem down to the tee.
    Drawn at 2x so text stays sharp on the wall. Three textures per hole: normal, selected, and number-only for holes outside the filter. */
@@ -325,11 +333,64 @@ function compile(f) { // filter group -> list of row tests; arrays are "any of",
     if (k === "Trophy") { const s = new Set(v.map(x => x === "Masters champion")); return i => s.has(CHAMP[at(i, "player")]); }
     if (k === "Year") return i => { const y = at(i, "year") + 2000; return y >= v[0] && y <= v[1]; };
     if (k === "Distance") return i => { const d = at(i, "yd"); return d >= v[0] && d <= v[1]; };
+    if (k === "Stroke") return i => { const n = at(i, "stroke"); return n >= v[0] && (v[1] >= 8 || n <= v[1]); }; // 8 = 8 or more
     if (ENUM[k]) { const [field, names] = ENUM[k], s = new Set(v.map(x => names.indexOf(x))); return i => s.has(at(i, field)); }
     return () => true;
   });
 }
+// key numbers for a selection: average flight, share of flights that finished in water, and how those player-holes ended
+// (each player's hole counted once, by its result: the outcome bar and "birdie or better")
+const WATER = D.regions.indexOf("Water");
+function stats(rows) {
+  if (!rows.length) return null;
+  let yd = 0, water = 0; const holes = new Map();
+  for (const i of rows) {
+    yd += at(i, "yd"); if (at(i, "region") === WATER) water++;
+    holes.set(((at(i, "year") * 5 + at(i, "round")) * 400 + at(i, "player")) * 19 + at(i, "hole"), [at(i, "score"), at(i, "count")]);
+  }
+  const dist = Array(D.scores.length).fill(0); let n = 0;
+  let strokes = 0, m = 0;
+  for (const [sc, c] of holes.values()) { if (sc >= 0) { dist[sc]++; n++; } if (c > 0) { strokes += c; m++; } }
+  return { avgYd: Math.round(yd / rows.length), water: water / rows.length, holes: n, dist: dist.map(d => n ? d / n : 0), under: n ? dist.slice(0, 4).reduce((a, b) => a + b, 0) / n : 0, avgStrokes: m ? strokes / m : 0 };
+}
 const pickShots = f => { if (!f) return []; const t = compile(f), out = []; for (let i = 0; i < NSHOT; i++) if (t.every(fn => fn(i))) out.push(i); return out; };
+
+/* ---------- zones: where the selection finished on one hole, by sector (greenside 3x3 + fairway left/right) ----------
+   each zone sits at the average landing spot of that sector on that hole (all years), shaded by its share of the selection */
+const ZONE_AT = (() => { // [hole][sector] -> [x, z] centroid
+  const acc = Array.from({ length: 19 }, () => D.sectors.map(() => [0, 0, 0]));
+  for (let i = 0; i < NSHOT; i++) { const sc = at(i, "sector"); if (sc < 0) continue; const a = acc[at(i, "hole")][sc]; a[0] += at(i, "tx") / QN; a[1] += at(i, "tz") / QN; a[2]++; }
+  return acc.map(h => h.map(([x, z, n]) => n ? [x / n, z / n] : null));
+})();
+const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
+const zoneLabel = txt => { const c = document.createElement("canvas"); c.width = 256; c.height = 128; const g = c.getContext("2d");
+  g.fillStyle = "rgba(12,33,22,.92)"; g.beginPath(); g.roundRect(8, 16, 240, 96, 30); g.fill();
+  g.fillStyle = "#f7f5ec"; g.font = "600 64px 'IBM Plex Sans'"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(txt, 128, 66); return tex(c); };
+let zoneKey = "";
+function drawZones(holeN, rows) { // rows: selected flights; only those on this hole count
+  const key = holeN + ":" + rows.length + ":" + rows[0];
+  if (key === zoneKey) return; zoneKey = key;
+  zoneGroup.children.forEach(o => { o.geometry?.dispose(); o.material.map?.dispose(); o.material.dispose(); }); zoneGroup.clear();
+  if (!holeN) return;
+  const n = D.sectors.map(() => 0); let tot = 0;
+  for (const i of rows) if (at(i, "hole") === holeN) { const sc = at(i, "sector"); if (sc >= 0) { n[sc]++; tot++; } }
+  if (!tot) return;
+  D.sectors.forEach((name, sc) => {
+    const c = ZONE_AT[holeN][sc]; if (!c) return;
+    const share = n[sc] / tot, fair = name.startsWith("Fairway"), r = fair ? 2.4 : 0.6, y = heightAt(c[0], c[1]) + 0.06;
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicNodeMaterial({ color: "#fce300", transparent: true, opacity: 0.12 + 0.6 * share, depthWrite: false }));
+    disc.position.set(c[0], y, c[1]); disc.renderOrder = 5; zoneGroup.add(disc);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(r - 0.05, r, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicNodeMaterial({ color: "#fce300", transparent: true, opacity: 0.8, depthWrite: false }));
+    ring.position.set(c[0], y + 0.01, c[1]); zoneGroup.add(ring);
+    if (share < 0.005) return; // nothing landed here: the faint disc says so, no label
+    const sp = new THREE.Sprite(new THREE.SpriteNodeMaterial({ map: zoneLabel(Math.round(share * 100) + "%"), depthTest: false, sizeAttenuation: false, transparent: true }));
+    // greenside labels are pushed out from the green so the 3x3 ring stays readable; a line ties each to its zone
+    const g = HOLES[holeN - 1].green, lx = fair ? c[0] : g.x + (c[0] - g.x) * 2.4, lz = fair ? c[1] : g.z + (c[1] - g.z) * 2.4, ly = heightAt(lx, lz) + 1.2;
+    sp.position.set(lx, ly, lz);
+    if (!fair) { const lg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(c[0], y + 0.05, c[1]), new THREE.Vector3(lx, ly - 0.2, lz)]);
+      zoneGroup.add(new THREE.Line(lg, new THREE.LineBasicNodeMaterial({ color: "#fce300", transparent: true, opacity: 0.7 }))); } sp.scale.set(0.04 * (window.TAG_SCALE || 1), 0.02 * (window.TAG_SCALE || 1), 1); sp.renderOrder = 11; zoneGroup.add(sp);
+  });
+}
 
 /* ---------- arcs: one draw call, drawn in by the shader (TSL) ---------- */
 // colour by score (design colour key), same order as D.scores; unknown scores are grey
@@ -381,29 +442,35 @@ function buildArcs(groups) { // groups: [[rowIndices, group colour or null (= co
   uAlpha.value = THREE.MathUtils.clamp(0.95 - 0.13 * Math.log10(total + 1), 0.32, 0.85);
 }
 
-/* ---------- Game focus: Rory McIlroy, 2025 final round, Amen Corner, shot by shot (real shot positions) ----------
-   steps are every stroke with a flight (a drop is shown, but is not a step); index.html builds the same list.
-   Played shots stay faint, the current one is bright, later ones are hidden. */
-const FOCUS = D.focus.holes.map(fh => ({ hole: HOLES[fh.hole - 1], shots: fh.shots.filter(sh => sh.from) }));
-const FSTEPS = FOCUS.flatMap((fh, h) => fh.shots.map((sh, s) => ({ h, s, sh })).filter(x => x.sh.kind !== "Drop"));
+/* ---------- Game focus: the chapter's sequence, shot by shot (real shot positions) ----------
+   index.html builds the steps (focusSteps): each names its hole (hi), shot (si) and whether it is "Shot 0", the lie before the
+   shot is hit. Every shot of the chapter's holes is drawn: played ones faint, the current one bright, later ones hidden. */
 const focusGroup = new THREE.Group(); scene.add(focusGroup);
-FOCUS.forEach(fh => {
-  const g = new THREE.Group();
-  fh.shots.forEach(sh => {
-    const type = sh.kind === "Putt" ? 3 : sh.kind === "Chip" ? 2 : sh.kind === "Drop" ? 3 : 0, yf = heightAt(...sh.from), yt = heightAt(...sh.to);
-    const pts = Array.from({ length: 30 }, (_, i) => { const o = [0, 0, 0]; arcPoint(sh.from[0], sh.from[1], sh.to[0], sh.to[1], type, 0, i / 29, o, yf, yt); return new THREE.Vector3(...o); });
-    const r = sh.kind === "Drop" ? 0.03 : type === 3 ? 0.04 : 0.1;
-    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, r, 8), new THREE.MeshBasicNodeMaterial({ color: sh.kind === "Drop" ? "#8d8d8d" : "#fff", transparent: true })));
+let focusFor = null, FOCUS = [];
+function buildFocus(ch) { // tubes for every shot of the chapter's holes; rebuilt when the chapter changes
+  if (ch === focusFor) return; focusFor = ch;
+  focusGroup.children.forEach(g => g.children.forEach(m => { m.geometry.dispose(); m.material.dispose(); }));
+  focusGroup.clear();
+  FOCUS = [...new Map(ch.steps.map(st => [st.hi, st])).values()].map(st => ({ hole: HOLES[st.hole - 1], shots: st.shots }));
+  FOCUS.forEach(fh => {
+    const g = new THREE.Group();
+    fh.shots.forEach(sh => {
+      if (!sh.from) { g.add(new THREE.Group()); return; } // a penalty: no flight, keeps the indices aligned with the shot list
+      const type = sh.kind === "Putt" ? 3 : sh.kind === "Chip" ? 2 : sh.kind === "Drop" ? 3 : 0, yf = heightAt(...sh.from), yt = heightAt(...sh.to);
+      const pts = Array.from({ length: 30 }, (_, i) => { const o = [0, 0, 0]; arcPoint(sh.from[0], sh.from[1], sh.to[0], sh.to[1], type, 0, i / 29, o, yf, yt); return new THREE.Vector3(...o); });
+      const r = sh.kind === "Drop" ? 0.03 : type === 3 ? 0.04 : 0.1;
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, r, 8), new THREE.MeshBasicNodeMaterial({ color: sh.kind === "Drop" ? "#8d8d8d" : "#fff", transparent: true })));
+    });
+    focusGroup.add(g);
   });
-  focusGroup.add(g);
-});
-function showFocusStep(step) {
-  const st = FSTEPS[Math.min(step, FSTEPS.length - 1)];
+}
+function showFocusStep(ch, step) {
+  const st = ch.steps[Math.min(step, ch.steps.length - 1)];
   focusGroup.children.forEach((g, h) => {
-    g.visible = h === st.h; // one hole at a time
-    g.children.forEach((m, s) => { m.visible = s <= st.s; m.material.opacity = s === st.s ? 1 : 0.4; });
+    g.visible = h === st.hi; // one hole at a time
+    g.children.forEach((m, s) => { m.visible = s < st.si || (s === st.si && !st.pre); if (m.material) m.material.opacity = s === st.si ? 1 : 0.4; });
   });
-  return st;
+  return { h: st.hi, s: st.si, sh: st.shot, pre: !!st.pre };
 }
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 function shotCam(sh) { // "Tee" in game focus: stand behind the ball, looking down the shot
@@ -506,7 +573,7 @@ function preset(name, h, box = COURSE_BOX) {
 }
 
 /* ---------- state from index.html ---------- */
-let last = {}, view = null, focusShot = null, counts = {};
+let last = {}, view = null, focusShot = null, counts = {}, lastRows = [], zoneHole = null;
 const GROUP_COL = { A: "#3ddbd9", B: "#ff832b" }; // IBM Teal 30 / Orange 40, same as index.html
 const callout = document.getElementById("callout");
 const STAGE_W = 5280, STAGE_H = 2970;
@@ -516,13 +583,16 @@ function update(S, v) {
   renderer.domElement.style.visibility = view ? "visible" : "hidden";
   if (!view) { last = {}; return; }
   const fp = view === "freeplay";
-  const filters = fp ? S.filters : view === "filterset" ? { Hole: ["13"], Shot: ["Approach"] } : view === "idle" ? {} : null; // idle: every shot, as a backdrop
-  const filtersB = fp && S.compare ? S.filtersB : null; // compare: second group
+  const ch = S.chapter; // the tour chapter on screen (index.html), null in Freeplay outside a tour chapter
+  const filters = fp ? S.filters : view === "filterset" ? ch.filters : view === "idle" ? {} : null; // idle: every shot, as a backdrop
+  const filtersB = fp && S.compare ? S.filtersB : view === "filterset" ? ch.filtersB || null : null; // compare: second group
   const course = view !== "idle"; // data chapter, game focus, Freeplay: the presenter can change the view
   const disp = course ? S.display : { shots: true, names: false, pins: false, data: "Arcs" };
   controls.enabled = interactive = course; // the whole course takes touch
   controls.autoRotate = course && S.cam === "Orbit" && !userCam;
   labels.visible = disp.names; pins.visible = disp.pins;
+  const dayA = view === "round" ? `${ch.steps[0].seq.year}-${ch.steps[0].seq.round}` : dayOf(filters), dayB = filtersB ? dayOf(filtersB) : dayA;
+  placePins(dayA === dayB ? dayA : null);
   // selected holes look like selected filter tiles; the rest shrink to their number
   const picked = filtersB ? (filters?.Hole && filtersB.Hole ? [...filters.Hole, ...filtersB.Hole] : null) : filters?.Hole;
   const tagged = fp && S.flyHole ? [String(S.flyHole)] : picked; // a focused hole reads as selected
@@ -530,13 +600,14 @@ function update(S, v) {
   TAGS.forEach(l => { const on = !!tagged?.includes(l.userData.n), t = on ? l.userData.tex.on : tagged ? l.userData.tex.mini : l.userData.tex.off;
     if (t !== l.userData.cur) { l.material.map = l.userData.cur = t; l.material.needsUpdate = true; } l.material.opacity = tagged && !on ? 0.6 : 1; });
   focusGroup.visible = view === "round";
-  if (view === "round") focusShot = showFocusStep(S.step);
+  if (view === "round") { buildFocus(ch); focusShot = showFocusStep(ch, S.step); }
 
   const dataKey = JSON.stringify([filters, filtersB]);
   if (dataKey !== last.data) {
     const a = pickShots(filters), b = pickShots(filtersB);
     buildArcs(filtersB ? [[a, GROUP_COL.A], [b, GROUP_COL.B]] : [[a, null]]);
-    counts = { a: a.length, b: filtersB ? b.length : null };
+    lastRows = a; // group A's flights, for the zones
+    counts = { a: a.length, b: filtersB ? b.length : null, sa: stats(a), sb: filtersB ? stats(b) : null };
     frameBox = boxOf(filtersB ? [a, b] : [a]); // auto-frame what is shown
   }
   arcs.visible = !!filters && disp.shots && disp.data === "Arcs";
@@ -545,7 +616,9 @@ function update(S, v) {
   // camera target: a hole tapped on the course, else the one filtered hole, else frame the whole selection
   const one = picked && new Set(picked).size === 1 ? picked[0] : null;
   const hole = fp && S.flyHole ? HOLES[S.flyHole - 1] : one ? HOLES[+one - 1] : null;
-  const camKey = view === "idle" ? "idle" : view === "round" ? ["round", S.step, S.cam, S.frameTick, S.resetTick].join() : [view, S.cam, hole?.n, dataKey, S.frameTick, S.resetTick].join();
+  zoneHole = disp.zones && filters && view !== "round" && hole ? hole.n : null; // zones need one hole: tapped, or the one filtered
+  drawZones(zoneHole, zoneHole ? lastRows : []); zoneGroup.visible = !!zoneHole;
+  const camKey = view === "idle" ? "idle" : view === "round" ? ["round", ch.title, S.step, S.cam, S.frameTick, S.resetTick].join() : [view, S.cam, hole?.n, dataKey, S.frameTick, S.resetTick].join();
   // Freeplay opens on the whole course, and Reset returns to it; Frame selection and filter changes frame the selection
   const wholeCourse = fp && (last.view !== view || S.resetTick !== last.reset);
   if (camKey !== last.cam && view === "idle") { want = null; flyT = 0; } // the fly-through drives the camera on Idle
@@ -607,13 +680,13 @@ renderer.setAnimationLoop(() => {
   uProg.value = Math.min(uProg.value + dt * 0.7, 1);
   controls.update(dt);
   renderer.render(scene, camera);
-  if (view === "round" && callout && focusShot) { // pin the DOM callout to where the current shot finished
-    const p = V3(focusShot.sh.to, 0.2).project(camera);
+  if (view === "round" && callout && focusShot) { // pin the DOM callout to where the current shot finished (or, on Shot 0, to the ball)
+    const p = V3(focusShot.pre ? focusShot.sh.from : focusShot.sh.to, 0.2).project(camera); // Shot 0: the ball before it is hit
     const px = ((p.x + 1) / 2) * STAGE_W, py = ((1 - p.y) / 2) * STAGE_H;
     callout.style.left = px - 60 + "px"; callout.style.top = py - 60 + "px";
     anchorInsight(px, py);
   }
 });
 
-window.sim = { update, get counts() { return counts; }, get backend() { return renderer.backend.isWebGPUBackend ? "WebGPU" : "WebGL2"; } };
+window.sim = { update, get counts() { return counts; }, get zoneHole() { return zoneHole; }, get backend() { return renderer.backend.isWebGPUBackend ? "WebGPU" : "WebGL2"; } };
 dispatchEvent(new Event("sim-ready"));

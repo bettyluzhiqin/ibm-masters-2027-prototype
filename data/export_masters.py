@@ -10,7 +10,7 @@ import json, math, sys
 import duckdb
 
 DB, OUT = sys.argv[1], sys.argv[2]
-YEARS = (2017, 2026)
+YEARS = (2016, 2026)
 U = 9.144                      # metres per world unit (10 yd)
 Q = 20                         # int16 quantisation: 1/20 unit (~0.46 m)
 FIELDS = ["hole", "year", "round", "player", "stroke", "count", "type", "score", "region", "sector",
@@ -38,7 +38,9 @@ for n, name, par, diff, yards, avg in q("select number,name,par,difficulty,yards
     line.append(world(px, py))
     # historical insights for this hole (all rounds' lists, "Historically" statements only, deduplicated, shortest first)
     hist = sorted({t for (js,) in q("select insights from hole_insights where hole=?", n) for t in json.loads(js) if t.startswith("Historically")}, key=len)
-    holes.append({"n": n, "name": name, "par": par, "difficulty": diff, "yd": yards, "avg": round(avg, 2), "line": line, "insights": hist[:2]})
+    # the pin for each year and round (the sim shows the day's pin when a story is about one round)
+    pins = {f"{y}-{r}": world(x, y_) for y, r, x, y_ in q("select year, round, pin_x, pin_y from hole_geometries where hole=? and year between ? and ?", n, *YEARS)}
+    holes.append({"n": n, "name": name, "par": par, "difficulty": diff, "yd": yards, "avg": round(avg, 2), "line": line, "insights": hist[:2], "pins": pins})
 
 # --- island outline: robust radius of all play around the centre, per angle, smoothed ---
 pts = q("select x,y from shots where year between ? and ? using sample 60000 rows", *YEARS)
@@ -70,7 +72,7 @@ sector_name = dict(q("select id,name from sectors"))
 # sector = the area of the current hole the ball landed in (glossary: overlapping sections of the playable area)
 #  - greenside: the data's 25 greenside names fold into a 3x3 grid. Side = first LEFT/RIGHT token (else centre),
 #    depth = first FRONT/BACK token (else middle). e.g. LEFT_BACK_BACK -> back left, FRONT_CENTER -> front centre.
-#  - fairway left / right: the data never fills these in 2017-2026, so they are derived: which side of the hole's
+#  - fairway left / right: the data never fills these in 2016-2026, so they are derived: which side of the hole's
 #    fairway line (tee -> usual landing spots -> pin) an off-green landing finished, walking tee -> green.
 DEPTHS, SIDES = ["back", "middle", "front"], ["left", "centre", "right"]
 SECTORS = ["Fairway left", "Fairway right"] + [f"Greenside {d} {sd}" for d in DEPTHS for sd in SIDES]
@@ -117,39 +119,86 @@ for hole, year, rnd, player, stroke, count, score, region, sec, fx, fy, fg, x, y
     buf.extend(rec)
     n_out += 1
 
-# --- Game focus: Rory McIlroy, 2025 final round, Amen Corner (11, 12, 13), hole by hole ---
+# --- Game focus sequences: any player / year / round / holes, shot by shot (real positions) ---
 # score = strokes played minus par. The data logs a penalty as its own row (no movement) and then the drop as a movement;
 # the penalty counts as one stroke, the drop counts as none. The data's own count/score columns count the drop, so they are not used.
+# Tours pick a sequence and, optionally, a range of strokes from it (index.html). Every played shot carries "from this spot" odds:
+# pre = the field's chance of birdie / par from where the shot was played, post = from where it finished.
 FRIENDLY = {"FAIRWAY": "Fairway", "GREEN": "Green", "SECOND_CUT": "Second cut", "BUNKER": "Bunker", "GREENSIDE_BUNKER": "Greenside bunker",
             "PINESTRAW": "Pine straw", "WATER": "Water"}
 SCORE_NAME = {-3: "Albatross", -2: "Eagle", -1: "Birdie", 0: "Par", 1: "Bogey", 2: "Double Bogey", 3: "Triple Bogey"}
-focus_holes = []
-KEY_SHOT = {11: 2, 12: 1, 13: 3}  # stroke shown in the shot video: 11 the approach, 12 the tee shot, 13 the third shot into the water
-for hole in (11, 12, 13):
-    rows = q("""select s.stroke, s.x, s.y, s.penalty, r.name from shots s join players p on p.id=s.player join regions r on r.id=s.region
-                where p.last_name='McIlroy' and s.year=2025 and s.round=4 and s.hole=? order by s.stroke""", hole)
-    par = next(h["par"] for h in holes if h["n"] == hole)
-    shots, prev = [], rows[0]
-    for st, x, y, pen, reg in rows[1:]:
-        yd = math.hypot(x - prev[1], y - prev[2]) * 1.0936
-        if pen and yd < 0.3:
-            shots.append({"kind": "Penalty", "yd": 0}); continue
-        if shots and shots[-1]["kind"] == "Penalty":  # the data logs the drop as a movement: it is not a stroke
-            shots.append({"kind": "Drop", "yd": round(yd), "from": world(prev[1], prev[2]), "to": world(x, y), "lie": FRIENDLY.get(reg, "Other")})
-            prev = (st, x, y, pen, reg); continue
-        kind = "Tee shot" if not shots else "Putt" if FRIENDLY.get(prev[4]) == "Green" else "Chip" if yd < 40 else "Approach"
-        shots.append({"kind": kind, "yd": round(yd), "from": world(prev[1], prev[2]), "to": world(x, y), "lie": FRIENDLY.get(reg, "Other")})
-        prev = (st, x, y, pen, reg)
-    strokes = sum(1 for sh in shots if sh["kind"] != "Drop")  # each played shot plus one per penalty; drops are free
-    # insights: the hole's round-4 insights from hole_insights (most specific first), and the shot the video shows
-    ins = json.loads(q("select insights from hole_insights where hole=? and round=4", hole)[0][0])
-    ins.sort(key=lambda t: (not t.startswith("In 2025"), not t.startswith("Currently"), len(t)))
-    focus_holes.append({"hole": hole, "par": par, "strokes": strokes, "score": SCORE_NAME.get(strokes - par, f"+{strokes - par}"), "shots": shots,
-                        "insights": ins[:2], "videoShot": KEY_SHOT[hole]})
+SEQUENCES = {  # id: player last name, year, round, holes, stroke shown in the shot video per hole
+    "mcilroy-2025-amen": ("McIlroy", 2025, 4, (11, 12, 13), {11: 2, 12: 1, 13: 3}),
+    "langer-2020-7": ("Langer", 2020, 4, (7,), {7: 2}),
+    "dechambeau-2020-7": ("DeChambeau", 2020, 4, (7,), {7: 2}),
+    "mcilroy-2025-15": ("McIlroy", 2025, 4, (15,), {15: 2}),
+}
+_field = {}
+def field(hole):  # every lie on this hole 2016-2026, with that player's final strokes on the hole
+    if hole not in _field:
+        r = np.array(q("""select x, y, on_green::int, max(count) over (partition by gid) from shots
+                          where hole=? and year between ? and ? and not in_hole""", hole, *YEARS), dtype=float)
+        _field[hole] = r
+    return _field[hole]
+def spot_odds(hole, par, x, y):
+    f = field(hole); d = np.hypot(f[:, 0] - x, f[:, 1] - y)
+    for rad in (8, 12, 18, 27, 40, 60):  # metres: widen until there is a fair sample
+        m = d < rad
+        if m.sum() >= 40: break
+    st = f[m, 3]
+    return round(100 * float((st <= par - 1).mean()), 2), round(100 * float((st == par).mean()), 2), int(m.sum())
+def pct(v): return f"{v:.2f}".rstrip("0").rstrip(".")
+def sequence(last, year, rnd, holes_, key_shot):
+    player = q("select first_name || ' ' || last_name from players where last_name=? and id in (select player from shots where year=?)", last, year)[0][0]
+    out = []
+    for hole in holes_:
+        rows = q("""select s.stroke, s.x, s.y, s.penalty, r.name, s.in_hole from shots s join players p on p.id=s.player join regions r on r.id=s.region
+                    where p.last_name=? and s.year=? and s.round=? and s.hole=? order by s.stroke""", last, year, rnd, hole)
+        par = next(h["par"] for h in holes if h["n"] == hole)
+        shots, prev, no = [], rows[0], 0
+        for st, x, y, pen, reg, inh in rows[1:]:
+            yd = math.hypot(x - prev[1], y - prev[2]) * 1.0936
+            if pen and yd < 0.3:
+                no += 1; shots.append({"kind": "Penalty", "yd": 0, "no": no}); continue
+            if shots and shots[-1]["kind"] == "Penalty":  # the data logs the drop as a movement: it is not a stroke
+                shots.append({"kind": "Drop", "yd": round(yd), "from": world(prev[1], prev[2]), "to": world(x, y), "lie": FRIENDLY.get(reg, "Other")})
+                prev = (st, x, y, pen, reg, inh); continue
+            no += 1
+            kind = "Tee shot" if no == 1 else "Putt" if FRIENDLY.get(prev[4]) == "Green" else "Chip" if yd < 40 else "Approach"
+            b0, p0, n0 = spot_odds(hole, par, prev[1], prev[2])
+            sh = {"kind": kind, "no": no, "yd": round(yd), "from": world(prev[1], prev[2]), "to": world(x, y), "lie": FRIENDLY.get(reg, "Other"),
+                  "fromLie": "Tee" if no == 1 else FRIENDLY.get(prev[4], "Other"),
+                  "pre": f"Historically, from this spot, players across the field have a {pct(b0)}% chance of birdie and a {pct(p0)}% chance of par.", "preN": n0}
+            if not inh:
+                b1, p1, n1 = spot_odds(hole, par, x, y)
+                sh["post"] = f"From where it finished, the field went on to make birdie {pct(b1)}% of the time and par {pct(p1)}%."
+            else:
+                sh["post"] = "Holed."
+            shots.append(sh); prev = (st, x, y, pen, reg, inh)
+        strokes = sum(1 for sh in shots if sh["kind"] != "Drop")  # each played shot plus one per penalty; drops are free
+        hi = q("select insights from hole_insights where hole=? and round=?", hole, rnd)
+        ins = json.loads(hi[0][0]) if hi else []
+        ins.sort(key=lambda t: (not t.startswith(f"In {year}"), not t.startswith("Currently"), len(t)))
+        if not any(t.startswith(f"In {year}") for t in ins):  # the round-4 list speaks about 2025; for other years use the historical lines
+            ins = next(h["insights"] for h in holes if h["n"] == hole)
+        out.append({"hole": hole, "par": par, "strokes": strokes, "score": SCORE_NAME.get(strokes - par, f"+{strokes - par}"), "shots": shots,
+                    "insights": ins[:2], "videoShot": key_shot.get(hole, 1)})
+    return {"player": player, "year": year, "round": rnd, "holes": out}
+import numpy as np
+sequences = {k: sequence(*v) for k, v in SEQUENCES.items()}
+# --- round stats for comparison stories (strokes in the round, average drive on par 4s and 5s) ---
+def round_stats(last, year, rnd):
+    r = q("""with g as (select s.hole, max(s.count) n from shots s join players p on p.id=s.player where p.last_name=? and s.year=? and s.round=? group by 1),
+                  t as (select s.hole, s.stroke, s.x, s.y from shots s join players p on p.id=s.player where p.last_name=? and s.year=? and s.round=? and s.stroke in (0,1))
+             select (select sum(n) from g), (select count(*) from g),
+                    (select avg(sqrt(power(a.x-b.x,2)+power(a.y-b.y,2))*1.0936) from t a join t b on a.hole=b.hole and a.stroke=0 and b.stroke=1 join holes h on h.number=a.hole where h.par>3)""",
+          last, year, rnd, last, year, rnd)[0]
+    par = sum(h["par"] for h in holes)
+    return {"strokes": int(r[0]), "holes": int(r[1]), "toPar": int(r[0]) - par if r[1] == 18 else None, "drive": round(float(r[2]))}
+stories = {f"{l}-{y}-{r}": round_stats(l, y, r) for l, y, r in [("Langer", 2020, 4), ("DeChambeau", 2020, 4)]}
 
 # --- terrain: a grid over the course. Surface = weighted majority of landings per cell (smoothed);
 #     elevation = mean landing height per cell, gaps filled smoothly. Cells nobody plays near become woods. ---
-import numpy as np
 SURF = ["Woods", "Fairway", "Second cut", "Green", "Bunker", "Water", "Pine straw", "Tee"]
 REG_SURF = {3: 1, 9: 2, 6: 2, 4: 3, 1: 4, 5: 4, 11: 5, 8: 6}           # data region id -> surface
 WEIGHT = np.array([1, 1, 1, 1.5, 4, 3, 1, 3])                              # small features (bunkers, water, tees) win ties
@@ -194,9 +243,10 @@ with open(f"{OUT}/shots.bin", "wb") as f:
     buf.tofile(f)
 meta = {"fields": FIELDS, "quant": Q, "count": n_out, "years": list(range(YEARS[0], YEARS[1] + 1)),
         "holes": holes, "island": island, "scores": SCORES, "sectors": SECTORS, "terrain": terrain, "players": names, "lastNames": [l for _, _, l in players], "regions": REGIONS,
-        "focus": {"player": "Rory McIlroy", "year": 2025, "round": 4, "holes": focus_holes}}
+        "sequences": sequences, "stories": stories}
 with open(f"{OUT}/meta.js", "w") as f:
     f.write("// Generated from the IBM Masters Data API database (masters.db, release v1.1.3). Do not edit by hand.\n")
     f.write("window.MASTERS_DATA=" + json.dumps(meta, ensure_ascii=False, separators=(",", ":")) + ";\n")
 print(f"{n_out} flights, {len(names)} players, {len(holes)} holes, shots.bin {len(buf) * 2 / 1e6:.1f} MB")
-print("focus:", [(h["hole"], h["strokes"], h["score"], [s["kind"] for s in h["shots"]]) for h in focus_holes])
+for k, sq in sequences.items(): print(k, sq["player"], [(h["hole"], h["score"], [(x["kind"], x.get("preN")) for x in h["shots"]]) for h in sq["holes"]])
+print("stories:", stories)

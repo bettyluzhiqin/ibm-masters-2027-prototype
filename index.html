@@ -146,7 +146,11 @@ body{display:flex;flex-direction:column}
 .callout{position:absolute;width:120px;height:120px;border:6px solid #fff;border-radius:50%;box-shadow:0 0 0 14px rgba(255,255,255,.25)}
 .callout::after{content:attr(data-t);position:absolute;left:150px;top:24px;white-space:nowrap;font-size:40px;
   background:var(--layer);border-left:6px solid var(--info);padding:14px 28px}
-.mediaframe{position:absolute;inset:140px 600px;border:4px dashed var(--border-strong);display:grid;place-items:center;font-size:64px;font-weight:300;color:var(--text-2)}
+.mediaframe{position:absolute;inset:140px 600px;border:4px dashed var(--border-strong);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;color:var(--text-2)}
+/* video chapter (Figma D1): dark screen, dashed frame where the film plays, play mark, the film's title in the serif, a quiet line under it */
+.mediaframe svg{width:150px;height:150px;fill:var(--text)}
+.mediaframe .mt{font-family:var(--font-serif);font-size:136px;font-weight:400;line-height:1;letter-spacing:-.01em;color:var(--text)}
+.mediaframe .mm{font-size:32px;font-weight:500;letter-spacing:var(--track-label);text-transform:uppercase;color:var(--text-3)}
 
 /* Carbon selectable tags */
 .chips{display:flex;flex-wrap:wrap;gap:12px}
@@ -452,6 +456,18 @@ body{letter-spacing:var(--track-body);-webkit-font-smoothing:antialiased;text-re
 .ov .key{font-size:21px;gap:18px 28px;letter-spacing:.03em}.ov .key .tp{font-variant-numeric:tabular-nums}
 .ov .shots{gap:14px 24px;font-size:26px;line-height:1.35;font-variant-numeric:tabular-nums}
 .ov .grp .gh{font-size:30px;letter-spacing:.02em}
+/* key numbers and outcome bar */
+.ov .figs{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:18px}
+.ov .ctx{font-size:26px;line-height:1.5;color:var(--text-2);margin-top:-14px;letter-spacing:.02em}
+.ov .hl.story{font-size:84px;line-height:1.02}
+.ov .fig b{display:block;font-size:42px;font-weight:300;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ov .figs[style*="--n:4"]{gap:14px}.ov .figs[style*="--n:4"] .fig b{font-size:36px}
+.ov .fig span{font-size:17px;font-weight:500;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3)}
+.ov .bar{display:flex;gap:3px;height:12px;border-radius:6px;overflow:hidden;margin-top:-6px}.ov .bar i{display:block;min-width:3px;background:var(--c)}
+.ov .bar.num{height:auto;border-radius:0;overflow:visible}.ov .bar.num i{background:none;display:flex;flex-direction:column;gap:10px}
+.ov .bar.num i::before{content:"";display:block;height:14px;border-radius:3px;background:var(--c)}
+.ov .bar.num span{font-size:22px;font-weight:500;color:var(--text-2);font-variant-numeric:tabular-nums}
+.ov .skey{display:flex;gap:28px;flex-wrap:wrap;font-size:22px;font-weight:500;color:var(--text-2)}.ov .skey span{display:flex;align-items:center;gap:10px}.ov .skey i{width:20px;height:20px;border-radius:50%}
 /* insight: editorial measure, generous leading */
 .ins{padding:44px 56px 48px 64px;gap:22px}
 #gfIns p{font-size:31px;line-height:1.5;letter-spacing:.005em}
@@ -516,7 +532,7 @@ body{letter-spacing:var(--track-body);-webkit-font-smoothing:antialiased;text-re
 
   <!-- MEDIA chapter -->
   <div data-v="media">
-    <div class="mediaframe">Video chapter (plays in Unreal)</div>
+    <div class="mediaframe"><svg viewBox="0 0 32 32"><path d="M7,28a1,1,0,0,1-1-1V5a1,1,0,0,1,1.4819-.8763l20,11a1,1,0,0,1,0,1.7525l-20,11A1.0005,1.0005,0,0,1,7,28ZM8,6.6909V25.3088L24.9248,16Z"/></svg><div class="mt" id="mediaTitle"></div><div class="mm" id="mediaMeta"></div></div>
   </div>
 
   <!-- OVERVIEW: one compact card, audience side, top corner. Small label (what view) > one big headline > short context.
@@ -563,6 +579,7 @@ body{letter-spacing:var(--track-body);-webkit-font-smoothing:antialiased;text-re
       <button class="qb" data-act="togglePins" id="qbPins" aria-label="Pins"><svg viewBox="0 0 32 32"><path d="M6,30H4V2H28l-5.8,9L28,20H6ZM6,18H24.33L19.8,11l4.53-7H6Z"/></svg></button>
       <button class="qb" data-act="showArcs" id="qbShots" aria-label="Arcs"><svg viewBox="0 0 32 32" class="stroke"><path d="M5 27C8 15 16 8 27 6"/><path d="M9 28C12 18 18 12 27 10"/><path d="M13 29C15 21 20 16 27 14"/></svg></button>
       <button class="qb" data-act="showBalls" id="qbBalls" aria-label="Balls"><svg viewBox="0 0 32 32" class="stroke"><circle cx="16" cy="16" r="11"/><circle cx="12" cy="12" r="1.2" class="dot"/><circle cx="17" cy="11" r="1.2" class="dot"/><circle cx="21" cy="15" r="1.2" class="dot"/><circle cx="13" cy="17" r="1.2" class="dot"/><circle cx="18" cy="19" r="1.2" class="dot"/><circle cx="14" cy="22" r="1.2" class="dot"/></svg></button>
+      <button class="qb" data-act="toggleZones" id="qbZones" aria-label="Zones"><svg viewBox="0 0 32 32"><path d="M4 4v24h24V4zm2 2h6v6H6zm8 0h4v6h-4zm6 0h6v6h-6zM6 14h6v4H6zm8 0h4v4h-4zm6 0h6v4h-6zM6 20h6v6H6zm8 0h4v6h-4zm6 0h6v6h-6z"/></svg></button>
       <button class="qb qbreset" data-act="resetView" id="qbReset" aria-label="Reset view"><svg viewBox="0 0 32 32"><path d="M18,28A12,12,0,1,0,6,16v6.2L2.4,18.6,1,20l6,6,6-6-1.4-1.4L8,22.2V16H8A10,10,0,1,1,18,26Z"/></svg></button>
     </div>
     <!-- camera options open right next to the Camera button -->
@@ -643,7 +660,7 @@ body{letter-spacing:var(--track-body);-webkit-font-smoothing:antialiased;text-re
 </div>
 </div></div>
 
-<script src="data/meta.js?v=9"></script><!-- real course + players, exported from the Data API database -->
+<script src="data/meta.js?v=11"></script><!-- real course + players, exported from the Data API database -->
 <script src="audio.js?v=8"></script>
 <script>
 /* ---------- physical screen size ----------
@@ -682,36 +699,79 @@ addEventListener("dblclick",e=>e.preventDefault());
 </script>
 <script>
 // Idle, Media and End stay as Unreal stills; the Digital Twin views are drawn live by sim.js
-const IMG={media:"assets/idle.jpg"}; // Idle is the live course fly-through; Media keeps a still for the video
+const IMG={}; // Idle is the live course fly-through; the video chapter plays on a dark screen (Figma D1)
 // pinned tours published to this screen from the iPad Library. ?unavailable=<id> drops one, to try the fallback.
 // Pinned tours live in the Creation Console on the iPad; the screen keeps the last synced copy.
 // Prototype: the iPad has one tour the screen has not synced yet, to show what Sync is for. ?unavailable=<id> drops one, to try the fallback.
 const DROP=new URLSearchParams(location.search).get("unavailable");
-const PINNED_ON_IPAD=[{id:"amen",title:"Amen Corner",info:"4 chapters · 12 min"},{id:"back9",title:"The Back Nine",info:"5 chapters · 15 min"},
+const PINNED_ON_IPAD=[{id:"amen",title:"Amen Corner",info:"4 chapters · 12 min"},{id:"precision",title:"Precision vs. Power",info:"4 chapters · 10 min"},
+  {id:"rory",title:"Rory's Approach",info:"1 chapter · 3 min"},{id:"back9",title:"The Back Nine",info:"5 chapters · 15 min"},
   {id:"champs",title:"Champions' Moments",info:"6 chapters · 18 min"},{id:"decade",title:"Ten Years at Augusta",info:"4 chapters · 10 min"},
   {id:"slam",title:"Rory's Grand Slam",info:"5 chapters · 14 min"}].filter(t=>t.id!==DROP);
-const pinnedCache={get(){try{return JSON.parse(localStorage.getItem("masters.pinned"))}catch{return null}},set(v){try{localStorage.setItem("masters.pinned",JSON.stringify(v))}catch{}}};
-let TOURS=pinnedCache.get()?.tours||PINNED_ON_IPAD.slice(0,4), newTours=new Set(), syncing=false;
+const pinnedCache={get(){try{return JSON.parse(localStorage.getItem("masters.pinned.v2"))}catch{return null}},set(v){try{localStorage.setItem("masters.pinned.v2",JSON.stringify(v))}catch{}}}; // v2: the list now has the story tours
+let TOURS=pinnedCache.get()?.tours||PINNED_ON_IPAD.slice(0,6), newTours=new Set(), syncing=false;
 // the screen remembers its tour (per device): chosen once at setup, not again unless someone changes it
 const tourMemory={get(){try{return JSON.parse(localStorage.getItem("masters.tour"))}catch{return null}},set(t){try{localStorage.setItem("masters.tour",JSON.stringify({id:t.id,title:t.title}))}catch{}}};
 const chosenTour=()=>TOURS.find(t=>t.id===tourMemory.get()?.id);
-// prototype: every tour plays the same chapters; only the title changes
-const TOUR={title:"Amen Corner",chapters:[
-  {type:"media",title:"Welcome to Augusta",n:2},
-  {type:"filterset",title:"Approach shots into 13",n:2},   // data chapter first …
-  // … then game focus, hole to hole: Rory McIlroy, 2025 final round, Amen Corner (real shots from the data)
-  // shot by shot: every stroke with a flight is a step (a drop is shown with the next shot, not a step); sim.js builds the same list
-  {type:"round",title:"McIlroy through Amen Corner",steps:MASTERS_DATA.focus.holes.flatMap((fh,hi)=>{const fl=fh.shots.filter(sh=>sh.from&&sh.kind!=="Drop"),last=fl.at(-1);
-    return fh.shots.map((shot,si)=>({...fh,hi,si,shot,n:fh.shots.slice(0,si+1).filter(x=>x.kind!=="Drop").length,lastOfHole:shot===last,res:`${fh.score} · ${fh.strokes}`})).filter(st=>st.shot.from&&st.shot.kind!=="Drop")})},
-  {type:"freeplay",title:"Explore the data",n:1}]};
+// Tours are data. Chapter types:
+//   media     video chapter (plays in Unreal)
+//   filterset data story: its own filters; optional compare (filtersB + group labels, A teal / B orange); optional insight lines
+//   round     game focus: a sequence from data/meta.js (player, year, round, holes), optional holes + stroke range [from, to];
+//             preShot adds "Shot 0", the lie before the first shot of the range. content[i] sets each step's cards:
+//             insight true = the hole insight, "spot" = the field's odds from this spot (before the shot) or from where it finished,
+//             a string = that text, false = none; video true/false
+//   freeplay  explore the data
+// Tours without a definition here (the other pinned titles) play the Amen Corner chapters under their own title.
+const SEQ=MASTERS_DATA.sequences, STORY=MASTERS_DATA.stories;
+const LvD=(f={})=>[{Player:["Bernhard Langer"],Year:[2020,2020],Round:["R4"],...f},{Player:["Bryson DeChambeau"],Year:[2020,2020],Round:["R4"],...f}];
+const L20=STORY["Langer-2020-4"],D20=STORY["DeChambeau-2020-4"],par=d=>d===0?"even":(d>0?"+":"−")+Math.abs(d);
+const TOUR_DEFS={
+  amen:{title:"Amen Corner",chapters:[
+    {type:"media",title:"Welcome to Augusta",n:2,length:"60 s"},
+    {type:"filterset",title:"Approach shots into 13",n:2,filters:{Hole:["13"],Shot:["Approach"]}},
+    {type:"round",title:"McIlroy through Amen Corner",seq:"mcilroy-2025-amen"}, // every shot of 11–13, hole insight + video each step
+    {type:"freeplay",title:"Explore the data"}]},
+  precision:{title:"Precision vs. Power",chapters:[
+    {type:"filterset",title:"Langer vs DeChambeau, 2020, Round 4, All Holes",headline:"Langer vs DeChambeau",filters:LvD()[0],filtersB:LvD()[1],groups:["Bernhard Langer","Bryson DeChambeau"],
+      insight:[`2020 final round: Langer ${L20.strokes} (${par(L20.toPar)}), DeChambeau ${D20.strokes} (${par(D20.toPar)}).`,
+               `DeChambeau's drives averaged ${D20.drive} yd on the par 4s and 5s, Langer's ${L20.drive} yd: ${D20.drive-L20.drive} yards more, two shots worse.`]},
+    {type:"filterset",title:"Langer vs DeChambeau, 2020, Round 4, Hole No. 7",headline:"Langer vs DeChambeau",filters:LvD({Hole:["7"]})[0],filtersB:LvD({Hole:["7"]})[1],groups:["Bernhard Langer","Bryson DeChambeau"]},
+    {type:"round",title:"2nd Shot, Bernhard Langer, 2020, Round 4, Hole No. 7",seq:"langer-2020-7",shots:[2,2],preShot:true,
+      content:[{insight:"spot",video:false},{insight:"spot",video:true}]},   // tee view, then shot playback with video
+    {type:"round",title:"2nd Shot, Bryson DeChambeau, 2020, Round 4, Hole No. 7",seq:"dechambeau-2020-7",shots:[2,2],preShot:true,
+      content:[{insight:"spot",video:false},{insight:"spot",video:false}]}]}, // tee view, then shot playback (no video)
+  rory:{title:"Rory's Approach",chapters:[
+    {type:"round",title:"Rory McIlroy, 2025, Final Round, Hole No. 15",seq:"mcilroy-2025-15",shots:[2,2],preShot:true,
+      content:[{insight:"spot",video:false},{insight:"spot",video:true}]}]}, // shot 0: "from this spot…", shot 1: insight + video
+};
+// game focus steps: every stroke with a flight in the range (a drop is shown with the next shot, not a step); sim.js reads these
+function focusSteps(c){
+  const sq=SEQ[c.seq],holes=sq.holes.filter(h=>!c.holes||c.holes.includes(h.hole)),[lo,hi]=c.shots||[1,99],out=[];
+  holes.forEach((fh,h)=>{
+    const played=fh.shots.filter(sh=>sh.from&&sh.kind!=="Drop"),last=played.at(-1),inRange=played.filter(sh=>sh.no>=lo&&sh.no<=hi);
+    inRange.forEach((shot,k)=>{const base={...fh,seq:sq,hi:h,si:fh.shots.indexOf(shot),shot,n:shot.no,res:`${fh.score} · ${fh.strokes}`};
+      if(c.preShot&&k===0) out.push({...base,pre:true}); // "Shot 0": standing at the ball, before it is hit
+      out.push({...base,lastOfHole:shot===last});});
+  });
+  out.forEach((st,i)=>{const ct=c.content?.[i]??{insight:true,video:!st.pre};
+    st.video=!!ct.video;
+    st.text=ct.insight===false?[]:ct.insight==="spot"?[st.pre?st.shot.pre:st.shot.post]:typeof ct.insight==="string"?[ct.insight]:st.insights;});
+  return out;
+}
+const builtTours={};
+function tourFor(t){ // the tour this screen runs: its definition (or Amen Corner's chapters) under the pinned title
+  const id=TOUR_DEFS[t?.id]?t.id:"amen",def=builtTours[id]||=({...TOUR_DEFS[id],chapters:TOUR_DEFS[id].chapters.map(c=>c.type==="round"?{...c,steps:focusSteps(c)}:c)});
+  return {...def,id,title:t?.title||def.title};
+}
+let TOUR=tourFor(null);
 // Masters reference data. Course, players and shots come from the Data API export in data/ (real); champions are listed here.
 window.MASTERS={
-  years:MASTERS_DATA.years, // last 10 Masters in the data: 2017–2026
+  years:MASTERS_DATA.years, // Masters in the data: 2016–2026
   holes:MASTERS_DATA.holes, // Augusta National from the data: name, par, yards
   champions:{2016:"Danny Willett",2017:"Sergio Garcia",2018:"Patrick Reed",2019:"Tiger Woods",2020:"Dustin Johnson",
     2021:"Hideki Matsuyama",2022:"Scottie Scheffler",2023:"Jon Rahm",2024:"Scottie Scheffler",2025:"Rory McIlroy"},
   earlierWinners:["Phil Mickelson","Bubba Watson","Adam Scott","Jordan Spieth"], // won before 2016 (Woods too, already above)
-  players:MASTERS_DATA.players}; // 290 players with shots 2017–2026, sorted by surname
+  players:MASTERS_DATA.players}; // every player with shots 2016–2026, sorted by surname
 const MASTERS=window.MASTERS;
 MASTERS.winners=[...new Set([...Object.values(MASTERS.champions),...MASTERS.earlierWinners])];
 
@@ -724,10 +784,11 @@ const TO_PAR={"Hole in One":"1","Albatross":"−3","Eagle":"−2","Birdie":"−1
 //  players: long list; A–Z surname rail (drag to scrub) + tiles for that letter, no typing
 const FILTERS={
   Hole:{ui:"paint",layout:"grid hgrid",opts:Array.from({length:18},(_,i)=>String(i+1)),label:o=>`<b>${o}</b><span>${MASTERS.holes[o-1].name}</span>`}, // number + readable name
-  Year:{ui:"range",min:2017,max:2026,step:1,ticks:[2017,2020,2023,2026],marks:true}, // slider; a tick for every year, labels on a few
+  Year:{ui:"range",min:MASTERS_DATA.years[0],max:MASTERS_DATA.years.at(-1),step:1,ticks:[2016,2019,2022,2026],marks:true}, // slider; a tick for every year, labels on a few
   Round:{ui:"paint",layout:"seg",opts:["R1","R2","R3","R4"]},
   Player:{ui:"players",opts:MASTERS.players},
   Shot:{ui:"paint",layout:"seg",opts:["Tee","Approach","Chip","Putt"]},
+  Stroke:{ui:"range",min:1,max:8,step:1,ticks:[1,2,3,4,5,6,7,8],marks:true,open:true,hint:"Stroke number on the hole: 1 is the tee shot, 8 means 8 or more"}, // "shots 1–5" stories
   Region:{ui:"paint",layout:"grid rgrid",opts:MASTERS_DATA.regions,label:o=>`<i class="sw" style="background:${SURFACE[o]}"></i><span>${o}</span>`}, // 8 surfaces, each with a swatch
   Sector:{ui:"paint",layout:"grid secmap",opts:MASTERS_DATA.sectors,label:o=>o.startsWith("Fairway")?o:o.replace("Greenside ","").replace(/^./,x=>x.toUpperCase()),cls:o=>o.startsWith("Fairway")?"fw":"",hint:"Where it landed: around the green (back at the top) or which side of the fairway"}, // greenside areas from the data; fairway side derived from the line of play
   Distance:{ui:"range",min:0,max:579.37,step:10,unit:" yd",ticks:[0,200,400,579.37],marks:true,markStep:50}, // yards, up to the longest shot; same look as Year
@@ -758,6 +819,8 @@ const $=s=>document.querySelector(s), stage=$("#stage");
 
 function chapter(){return TOUR.chapters[S.ch]}
 const steps=c=>c.steps?c.steps.length:c.n||1;
+// what the sim draws in a tour chapter (data filters or game-focus steps); null outside a tour
+const simChapter=()=>S.view==="tour"&&S.mode==="tour"?chapter():null;
 function view(){ // what Unreal shows right now
   if(S.view!=="tour") return S.view;
   return S.mode==="tour"?chapter().type:"freeplay";
@@ -767,7 +830,7 @@ function go(v){S.view=v;S.menu=null;S.panel=null;
   render()}
 
 const act={
-  handshake(){S.mode="tour";S.ch=0;S.step=0;TOUR.title=chosenTour().title;go("tour")}, // straight into chapter 1
+  handshake(){S.mode="tour";S.ch=0;S.step=0;TOUR=tourFor(chosenTour());go("tour")}, // straight into chapter 1
   tourList(){S.tourList=!S.tourList;render()},
   handshakeFp(){S.mode="solo";go("tour")},
   next(){
@@ -786,6 +849,7 @@ const act={
   panelView(){S.panel=S.panel==="view"?null:"view";render()},
   togglePins(){S.display.pins=!S.display.pins;render()},
   toggleNames(){S.display.names=!S.display.names;render()},
+  toggleZones(){S.display.zones=!S.display.zones;render();if(S.display.zones&&!window.sim?.zoneHole)toast("Zones show on one hole: pick a hole")},
   // arcs / ball: pick how shots are drawn; tapping the one that is on hides the shots
   showArcs(){const on=S.display.shots&&S.display.data==="Arcs";S.display.shots=!on;S.display.data="Arcs";render()},
   // reset view: default camera for this chapter, framed on the selection, arcs only
@@ -1030,7 +1094,7 @@ function render(){
   const v=view();
   if(v!==render.lastV){if(v==="round")S.cam="Tee";if(v==="freeplay"&&!S.menu){S.panel="filters";S.fpFilter=null}render.lastV=v}
   stage.style.backgroundImage=IMG[v]?`url("${IMG[v]}")`:"none";
-  window.sim?.update(S,v);
+  S.chapter=simChapter();window.sim?.update(S,v);
   sfx.set(S.volume,S.muted,v);
   stage.querySelectorAll("[data-v]").forEach(e=>e.hidden=!(e.dataset.v===v||(e.dataset.v==="tour"&&S.view==="tour")));
   const inTour=S.mode==="tour", c=chapter(), fp=v==="freeplay";
@@ -1072,7 +1136,7 @@ function render(){
     const solo=S.mode==="solo";
     if(!solo&&t.id===chosenTour()?.id){S.menu=null;render();return} // same tour: nothing to change
     confirm(solo?`Start ${t.title}?`:`Switch to ${t.title}?`,solo?"This ends Freeplay. The screen returns to Idle with the tour ready.":"This ends the current tour. The screen returns to Idle with the new tour ready.",solo?"Start":"Switch",()=>{
-      tourMemory.set(t);TOUR.title=t.title;S.mode="tour";S.ch=0;S.step=0;S.tourList=false;go("idle");toast("Tour set: "+t.title)},"tours")})); // back to Idle with the new title; a tap starts it
+      tourMemory.set(t);TOUR=tourFor(t);S.mode="tour";S.ch=0;S.step=0;S.tourList=false;go("idle");toast("Tour set: "+t.title)},"tours")})); // back to Idle with the new title; a tap starts it
   document.querySelectorAll(".sidesw .chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.act==="side"+(stage.dataset.side==="left"?"Left":"Right"))); $("#confirm").hidden=S.menu!=="confirm";
   const panel=S.panel==="filters"&&!fp?null:S.panel; // Filters only exists in Freeplay
   $("#fpcol").hidden=!fp||!!S.menu||panel!=="filters"; $("#fp").hidden=panel!=="filters";
@@ -1080,7 +1144,7 @@ function render(){
   // gesture hint wherever the course takes touch; "tap a hole" only where it does something (Freeplay)
   // quick bar mirrors the View panel; Shots means nothing in game focus (only the player's shots are drawn)
   $("#quickBar").hidden=!courseView||S.view!=="tour";
-  $("#qbCam").classList.toggle("on",S.panel==="view"); $("#qbPins").classList.toggle("on",S.display.pins); $("#qbNames").classList.toggle("on",S.display.names);
+  $("#qbCam").classList.toggle("on",S.panel==="view"); $("#qbPins").classList.toggle("on",S.display.pins); $("#qbZones").classList.toggle("on",!!S.display.zones);$("#qbZones").disabled=v==="round";$("#qbNames").classList.toggle("on",S.display.names);
   $("#qbShots").classList.toggle("on",S.display.shots&&S.display.data==="Arcs"&&v!=="round");
   $("#qbBalls").classList.toggle("on",S.display.shots&&S.display.data==="Balls"&&v!=="round");
   $("#qbShots").disabled=$("#qbBalls").disabled=v==="round";
@@ -1092,14 +1156,17 @@ function render(){
   if(courseView) $("#camModes").replaceChildren(...Object.entries(camOpts).map(([o,l])=>chip(l,camNow===o,()=>{S.cam=o;toast("Camera: "+l)})));
   // chapter content
   // insight: one design for the data chapter and game focus; the shot video only in game focus
-  $("#gfStack").hidden=!["round","filterset"].includes(v); $("#gfVid").hidden=v!=="round";
-  if(v==="filterset") $("#gfIns").innerHTML=MASTERS_DATA.holes[12].insights.map(t=>`<p>${t}</p>`).join(""); // Approach shots into 13
-  if(v==="round"){const st=c.steps[S.step],shot=st.shot,lie=shot.lie&&shot.lie!=="Other"?" → "+shot.lie:"";
-    $("#callout").dataset.t=st.lastOfHole?st.res:`Shot ${st.n}${lie}`;
-    $("#gfIns").innerHTML=st.insights.map(t=>`<p>${t}</p>`).join("");
+  // each chapter decides its cards: data chapters their insight lines (else the one hole's insights), game-focus steps their flags
+  const st=v==="round"?c.steps[S.step]:null,oneHole=v==="filterset"&&c.filters?.Hole?.length===1&&(!c.filtersB||c.filtersB.Hole?.[0]===c.filters.Hole[0])?+c.filters.Hole[0]:null;
+  const lines=v==="filterset"?(c.insight||(oneHole?MASTERS_DATA.holes[oneHole-1].insights:[])):st?st.text:[];
+  $("#gfStack").hidden=!lines.length&&!st?.video; $("#gfStack .ins").hidden=!lines.length; $("#gfVid").hidden=!st?.video;
+  $("#gfIns").innerHTML=lines.map(t=>`<p>${t}</p>`).join("");
+  if(st){const shot=st.shot,lie=shot.lie&&shot.lie!=="Other"?" → "+shot.lie:"";
+    $("#callout").dataset.t=st.pre?`Shot ${st.n} · from the ${shot.fromLie}`:st.lastOfHole?st.res:`Shot ${st.n}${lie}`;
     $("#vidCap").textContent=`Hole ${st.hole} · shot ${st.n} · ${shot.kind}${lie}`;
     const key=S.ch+":"+S.step;if(render.clip!==key){render.clip=key;const b=$("#vidProg");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}}
   else render.clip=null;
+  if(v==="media"){$("#mediaTitle").textContent=c.title;const n=steps(c);$("#mediaMeta").textContent=`Video chapter${c.length?" · "+c.length:""}${n>1?` · film ${S.step+1} of ${n}`:""}`}
   renderOverview(v);layoutAudience();
   $("#prog").hidden=S.view!=="tour"||S.mode==="solo"; $("#prog").classList.toggle("away",S.mode==="breakout");
   $("#prog").innerHTML=`<b class="pn">${S.ch+1}<span> / ${TOUR.chapters.length}</span></b>`+TOUR.chapters.map((x,i)=>i!==S.ch?`<i class="pc${i<S.ch?" done":""}"></i>`:
@@ -1107,7 +1174,7 @@ function render(){
   if(S.view==="idle"){renderTourPicker();renderIdle()}}
 // overview: one compact card. Tags show the filters; narrowed ones bright, "all" ones quiet
 // overview: what is selected, in plain words. Active filters as label/value rows; everything left at "all" on one quiet line
-const SEL_LABEL={Hole:"Hole",Year:"Year",Round:"Round",Player:"Player",Shot:"Shot",Region:"Region",Sector:"Sector",Distance:"Distance",Score:"Score",Trophy:"Players"};
+const SEL_LABEL={Hole:"Hole",Year:"Year",Round:"Round",Player:"Player",Shot:"Shot",Stroke:"Strokes",Region:"Region",Sector:"Sector",Distance:"Distance",Score:"Score",Trophy:"Players"};
 function selValue(k,v){
   if(k==="Hole") return v.length===1?`${v[0]} · ${MASTERS.holes[v[0]-1].name}`:fmt("Hole",v);
   if(k==="Round") return v.map(r=>r.slice(1)).join(", ");
@@ -1144,28 +1211,100 @@ function renderOverview(v){
   const show=["round","filterset","freeplay"].includes(v);$("#overview").hidden=!show;if(!show)return;
   const c=chapter(),box=$("#ov");
   if(v==="round"){ // game focus: who, the scorecard through the sequence, this hole's shots
-    const st=c.steps[S.step],fx=MASTERS_DATA.focus;let n=0;
-    const done=i=>i<st.hi||(i===st.hi&&st.lastOfHole);
-    const card=`<div class="sc" style="grid-template-columns:repeat(${fx.holes.length},1fr)">`+fx.holes.map((h,i)=>
+    const st=c.steps[S.step],fx=st.seq,hs=[...new Map(c.steps.map(x=>[x.hole,x])).values()];let n=0; // the chapter's holes, in order
+    const done=i=>i<st.hi||(i===st.hi&&st.lastOfHole&&!st.pre);
+    // one hole: no scorecard, the hole line says it; several: one cell per hole
+    const card=hs.length<2?"":`<div class="sc" style="grid-template-columns:repeat(${hs.length},1fr)">`+hs.map((h,i)=>
       `<div class="${i===st.hi?"cur":""}">Hole ${h.hole}<br><span class="mk ${done(i)?mark(h.strokes-h.par):""}">${done(i)?h.strokes:"·"}</span></div>`).join("")+"</div>";
-    const rows=st.shots.map((sh,i)=>{const cl=i===st.si?" now":i>st.si?" later":"";return sh.kind==="Drop"?`<span class="${cl}"></span><span class="muted${cl}">Drop</span><span class="d muted${cl}">${sh.yd} yd</span>`
+    const rows=st.shots.map((sh,i)=>{const cl=i===st.si?" now":i>st.si||(st.pre&&i===st.si)?" later":"";return sh.kind==="Drop"?`<span class="${cl}"></span><span class="muted${cl}">Drop</span><span class="d muted${cl}">${sh.yd} yd</span>`
       :sh.kind==="Penalty"?`<span class="n${cl}">${++n}</span><span class="${cl}">Penalty stroke</span><span class="d${cl}"></span>`
       :`<span class="n${cl}">${++n}</span><span class="${cl}">${sh.kind}${sh.lie&&sh.lie!=="Other"?" · "+sh.lie:""}</span><span class="d${cl}">${sh.kind==="Putt"?Math.max(1,Math.round(sh.yd*3))+" ft":sh.yd+" yd"}</span>`}).join("");
-    box.innerHTML=`<div class="eb">Game focus · ${c.title}</div><div class="hl">${fx.player}</div><div class="meta">${fx.year} · Round ${fx.round} · ${st.score}</div>
+    box.innerHTML=`<div class="hl">${fx.player}</div><div class="meta">${fx.year} · Round ${fx.round}${st.pre?"":" · "+st.score}</div>
       ${card}<div class="sec">${holeLine(st.hole)}<div class="shots">${rows}</div></div>`;
     return;
   }
-  // data chapter / Freeplay: how many shots, which ones, what the colours mean
-  const f=v==="filterset"?{Hole:["13"],Shot:["Approach"]}:S.filters,cnt=window.sim?.counts||{},compare=v==="freeplay"&&S.compare;
-  const eb=v==="filterset"?`Data · ${c.title}`:S.mode==="tour"?`Freeplay · ${c.title}`:"Freeplay";
-  const groups=compare?[["A",S.filters,cnt.a],["B",S.filtersB,cnt.b]]:[[null,f,cnt.a]];
-  const hs=groups.map(([,gf])=>gf.Hole?.length===1?+gf.Hole[0]:null),hole=v==="freeplay"&&S.flyHole?S.flyHole:hs.every(h=>h&&h===hs[0])?hs[0]:null;
-  const key=!compare&&S.display.shots?`<div class="sec"><div class="key">${MASTERS_DATA.scores.map((sc,i)=>`<div><i class="dot" style="background:${SCORE_COL[i]}"></i>${sc}<span class="tp">${TO_PAR[sc]}</span></div>`).join("")}</div></div>`:"";
-  box.innerHTML=`<div class="eb">${eb}</div>`+(compare
-    ?groups.map(([g,gf,nn])=>{const sel=selection(gf,!!hole);return `<div class="grp sec"><div class="gh"><i class="dot" style="background:${GROUP_COL[g]}"></i><b>Group ${g}</b><span class="n">${(nn??0).toLocaleString()} shots</span></div>${sel.rows?`<div class="sel">${sel.rows}</div>`:""}${sel.rest?`<div class="rest">${sel.rest}</div>`:""}</div>`}).join("")
-    // single group: the shot count is the big headline; then the hole, the active filters, and one quiet line for the rest
-    :(()=>{const sel=selection(f,!!hole);return `<div class="hl">${(cnt.a??0).toLocaleString()} shots</div>${hole?holeLine(hole):""}${sel.rows?`<div class="sel">${sel.rows}</div>`:""}${sel.rest?`<div class="rest">${sel.rest}</div>`:""}`})())
-    +(hole&&compare?`<div class="sec">${holeLine(hole)}</div>`:"")+key;
+  // data chapter / Freeplay. Hierarchy (V1 "statement card"): eyebrow → the story in words (serif) → one context line →
+  // key numbers → outcome bar → colour key. A tour chapter says its story; Freeplay writes it from the filters.
+  const f=v==="filterset"?c.filters:S.filters,cnt=window.sim?.counts||{},compare=v==="freeplay"?S.compare:v==="filterset"&&!!c.filtersB;
+  const fB=v==="filterset"?c.filtersB:S.filtersB;
+  const names=compare?groupNames(f,fB,v==="filterset"?c.groups:null):null;
+  const story=v==="filterset"&&c.headline?c.headline:compare?`${names.short[0]} vs ${names.short[1]}`:v==="filterset"?c.title:describe(f).text;
+  const ctx=compare?contextOf(sharedFilters(f,fB),new Set(),new Set([...new Set([...Object.keys(f),...Object.keys(fB)])].filter(k=>JSON.stringify(f[k])!==JSON.stringify(fB[k])))):contextOf(f,describe(f).used);
+  const eb=S.mode==="breakout"&&resume?`From chapter ${resume.ch+1} · ${TOUR.chapters[resume.ch].title}`:""; // no category caption: the title says it
+  const pctf=x=>x<0.01&&x>0?"<1%":Math.round(x*100)+"%";
+  // which numbers: shots (single group; in a comparison it sits in the group header), scoring average when the story is
+  // a whole hole, otherwise the average shot; water; birdie or better (or the result, for one player-hole)
+  const wholeHole=sel=>sel.Hole?.length===1&&!["Shot","Stroke","Distance","Region","Sector","Score"].some(k=>sel[k]);
+  const figs=(s,sel,withShots,n)=>s?`<div class="figs" style="--n:${withShots?4:3}">`+(withShots?`<div class="fig"><b>${(n??0).toLocaleString()}</b><span>Shots</span></div>`:"")
+    +(wholeHole(sel)?`<div class="fig"><b>${s.avgStrokes.toFixed(2)}</b><span>Scoring avg</span></div>`:`<div class="fig"><b>${s.avgYd} yd</b><span>Avg shot</span></div>`)
+    +`<div class="fig"><b>${pctf(s.water)}</b><span>In water</span></div>`
+    +(s.holes===1?`<div class="fig"><b>${MASTERS_DATA.scores[s.dist.findIndex(d=>d>0)]??"—"}</b><span>Result</span></div>`:`<div class="fig"><b>${pctf(s.under)}</b><span>Birdie or better</span></div>`)+`</div>
+    `+bar(s,withShots):"";
+  // the outcome bar is the key: each segment carries its to-par number (Ace for a hole in one); a comparison gets one
+  // compact numbers-only key under both groups. Only scores that occur are shown; no words.
+  const par=i=>i===0?"Ace":TO_PAR[MASTERS_DATA.scores[i]];
+  function bar(s,numbered){return `<div class="bar${numbered?" num":""}" title="${s.holes} player-holes">${s.dist.map((d,i)=>d?`<i style="flex:${d};--c:${SCORE_COL[i]}">${numbered&&d>=0.04?`<span>${par(i)}</span>`:""}</i>`:"").join("")}</div>`}
+  const present=[cnt.sa,compare?cnt.sb:null].filter(Boolean).reduce((m,s2)=>s2.dist.map((d,i)=>m[i]||d>0),[]);
+  const key=compare&&S.display.shots?`<div class="skey">${present.map((on,i)=>on?`<span><i style="background:${SCORE_COL[i]}"></i>${par(i)}</span>`:"").join("")}</div>`:"";
+  box.innerHTML=`${eb?`<div class="eb">${eb}</div>`:""}<div class="hl story">${story}</div>${ctx?`<div class="ctx">${ctx}</div>`:""}`+(compare
+    ?[["A",f,cnt.a,cnt.sa],["B",fB,cnt.b,cnt.sb]].map(([g,gf,nn,st],i)=>`<div class="grp sec"><div class="gh"><i class="dot" style="background:${GROUP_COL[g]}"></i><b>${names.full[i]}</b><span class="n">${(nn??0).toLocaleString()} shots</span></div>${figs(st,gf,false)}</div>`).join("")
+    :`<div class="sec">${figs(cnt.sa,f,true,cnt.a)}</div>`)+key;
+}
+// ---------- the story in words, written from the filters (Freeplay) ----------
+const SCORE_PL={"Hole in One":"Holes in one",Albatross:"Albatrosses",Eagle:"Eagles",Birdie:"Birdies",Par:"Pars",Bogey:"Bogeys","Double Bogey":"Double bogeys","Triple Bogey":"Triple bogeys"};
+const SHOT_PL={Tee:"Tee shots",Approach:"Approach shots",Chip:"Chips",Putt:"Putts"};
+const REGION_IN={Water:"in the water",Bunker:"in bunkers","Greenside bunker":"in greenside bunkers",Green:"on the green",Fairway:"on the fairway","Second cut":"in the second cut","Pine straw":"in the pine straw",Other:"elsewhere"};
+const DAY={R1:"Thursday",R2:"Friday",R3:"Saturday",R4:"Sunday"};
+const lastName=n=>n.split(" ").slice(-1)[0];
+const holeList=h=>h.length===1?h[0]:fmt("Hole",h).replace(/, ([^,]*)$/," and $1");
+function describe(f){
+  const used=new Set(),u=k=>{used.add(k);return f[k]};
+  let subj=null;
+  if(f.Score&&f.Score.length<=2) subj=u("Score").map((x,i)=>i?SCORE_PL[x].toLowerCase():SCORE_PL[x]).join(" and ");
+  else if(f.Shot?.length===1) subj=f.Shot[0]==="Tee"&&f.Distance?"Drives":SHOT_PL[u("Shot")[0]];
+  if(f.Shot?.length===1&&f.Shot[0]==="Tee"&&f.Distance) used.add("Shot");
+  const one=f.Player?.length===1;
+  const bits=[];
+  if(!subj&&one) subj=u("Player")[0];
+  if(!subj&&f.Region?.length===1) subj=f.Region[0]==="Water"?"Balls":"Shots";
+  if(f.Distance){const [lo,hi]=u("Distance"),open=hi>=FILTERS.Distance.max;bits.push(lo>0&&open?`over ${lo} yards`:lo===0?`under ${hi} yards`:`of ${lo}–${hi} yards`)}
+  if(f.Region?.length===1) bits.push(REGION_IN[u("Region")[0]]);
+  if(f.Hole){const h=u("Hole");bits.push((subj==="Approach shots"&&h.length===1?"into ":"on ")+holeList(h))}
+  if(f.Player&&!used.has("Player")) bits.push("by "+(f.Player.length<=2?u("Player").map(lastName).join(" and "):`${u("Player").length} players`));
+  if(f.Trophy?.length===1) bits.push(u("Trophy")[0]==="Masters champion"?"by Masters champions":"by players who never won");
+  if(!subj&&f.Hole?.length===1&&Object.keys(f).every(k=>["Hole","Year","Round"].includes(k))) return {text:`How the field plays ${f.Hole[0]}`+when(f,used),used};
+  const text=(subj||"Every shot")+(bits.length?" "+bits.join(" "):f.Hole?"":" at Augusta")+when(f,used);
+  return {text,used};
+}
+function when(f,used){ // ", Sunday 2024" / ", 2016–2019" / ", Sunday"
+  const parts=[];
+  if(f.Round?.length===1){used.add("Round");parts.push(DAY[f.Round[0]])}
+  if(f.Year){used.add("Year");parts.push(fmt("Year",f.Year))}
+  return parts.length?", "+parts.join(" "):"";
+}
+// one quiet line for everything the headline does not say: the hole (name, par), who, when, the other filters
+function contextOf(f,used=new Set(),skip=new Set()){ // skip: what a comparison compares (the groups say it)
+  const h=f.Hole?.length===1?MASTERS.holes[f.Hole[0]-1]:null,out=[];
+  if(h) out.push(`Hole ${h.n} · ${h.name} · Par ${h.par}`); else if(f.Hole&&!used.has("Hole")) out.push("Holes "+fmt("Hole",f.Hole));
+  if(!f.Player&&!f.Trophy&&!skip.has("Player")&&!skip.has("Trophy")) out.push("All players"); else if(f.Player&&!used.has("Player")) out.push(f.Player.length<=2?f.Player.join(", "):f.Player.length+" players");
+  if(!f.Year){if(!skip.has("Year")) out.push(`${MASTERS.years[0]}–${MASTERS.years.at(-1)}`)} else if(!used.has("Year")) out.push(fmt("Year",f.Year));
+  if(f.Round&&!used.has("Round")) out.push("Round "+f.Round.map(r=>r.slice(1)).join(", ")); else if(!f.Round&&!skip.has("Round")) out.push("All rounds");
+  for(const k of ["Shot","Stroke","Region","Sector","Distance","Score","Trophy"]) if(f[k]&&!used.has(k)) out.push(`${SEL_LABEL[k]} ${selValue(k,f[k])}`);
+  if(!f.Hole&&!skip.has("Hole")) out.push("All holes");
+  return out.join(" · ");
+}
+// filters both groups share (the comparison's context) and names for what differs (the groups)
+const sharedFilters=(a,b)=>Object.fromEntries(Object.entries(a).filter(([k,v])=>JSON.stringify(b[k])===JSON.stringify(v)));
+function groupNames(a,b,given){
+  if(given) return {full:given,short:given.map(n=>MASTERS.players.includes(n)?lastName(n):n)};
+  const diff=[...new Set([...Object.keys(a),...Object.keys(b)])].filter(k=>JSON.stringify(a[k])!==JSON.stringify(b[k]));
+  const k=diff.length===1?diff[0]:null;
+  const nm=g=>{const v=g[k];if(!v) return "Everyone else";
+    if(k==="Player") return v.length<=2?v.join(" & "):v.length+" players";
+    if(k==="Year") return fmt("Year",v); if(k==="Round") return v.map(r=>DAY[r]).join(", "); if(k==="Hole") return "Hole "+fmt("Hole",v);
+    if(k==="Trophy") return v[0]==="Masters champion"?"Masters champions":"Never won"; return selValue(k,v);};
+  const full=k?[nm(a),nm(b)]:["Group A","Group B"];
+  return {full,short:full.map(n=>MASTERS.players.includes(n)?lastName(n):n)};
 }
 function renderIdle(){
   const cur=chosenTour(),gone=tourMemory.get()&&!cur;
@@ -1183,7 +1322,7 @@ function renderTourPicker(){
   $("#tlNote").innerHTML=first?"Choose the tour this screen runs. It will be remembered."
     :gone?'<svg viewBox="0 0 32 32"><path d="M16 23a1.5 1.5 0 101.5 1.5A1.5 1.5 0 0016 23zM15 12H17V21H15z"/><path d="M29,30H3a1,1,0,0,1-.8872-1.4614l13-25a1,1,0,0,1,1.7744,0l13,25A1,1,0,0,1,29,30ZM4.6507,28H27.3493l.002-.0033L16.002,6.1714h-.004L4.6487,27.9967Z"/></svg><span>“'+mem.title+'” is no longer available.</span>':"";
   $("#tlNote").hidden=!first&&!gone;
-  $("#tlRows").replaceChildren(...tourRows(t=>{tourMemory.set(t);TOUR.title=t.title;S.tourList=false;sfx.play("toggle");render();toast("Tour set: "+t.title)}));
+  $("#tlRows").replaceChildren(...tourRows(t=>{tourMemory.set(t);TOUR=tourFor(t);S.tourList=false;sfx.play("toggle");render();toast("Tour set: "+t.title)}));
   const last=pinnedCache.get()?.at;
   $("#tlSync").disabled=syncing; $("#tlSync span").textContent=syncing?"Syncing…":"Sync with iPad"; $("#tlSync").classList.toggle("spin",syncing);
   $("#tlSynced").textContent=syncing?"":last?`Synced ${new Date(last).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} · ${TOURS.length} pinned`:`${TOURS.length} pinned · not synced yet`;
@@ -1201,10 +1340,10 @@ function tourRows(pick){
 /* ---------- fit the 5280x2970 stage to the window, keeping the ratio ---------- */
 function fit(){const vp=$("#vp"),pad=0,s=Math.min((vp.clientWidth-pad)/5280,(vp.clientHeight-pad)/2970);
   stage.style.transform=`scale(${s})`;$("#frame").style.width=5280*s+"px";$("#frame").style.height=2970*s+"px"}
-if(chosenTour()) TOUR.title=chosenTour().title;
+TOUR=tourFor(chosenTour());
 addEventListener("sim-ready",()=>render());
 addEventListener("resize",fit);fit();applyCtrl();renderFp();render();
 </script>
-<script type="module" src="sim.js?v=37"></script>
+<script type="module" src="sim.js?v=44"></script>
 </body>
 </html>
