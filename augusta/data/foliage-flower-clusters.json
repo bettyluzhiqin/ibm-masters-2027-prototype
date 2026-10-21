@@ -1,0 +1,88 @@
+{
+  "image": "tex/foliage-flower-clusters.png",
+  "width": 1536,
+  "height": 1024,
+  "origin": "top-left",
+  "cells": [
+    {
+      "species": "dogwood",
+      "row": 0,
+      "col": 0,
+      "rect": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "worldWidth": 0.6,
+      "aspect": 1
+    },
+    {
+      "species": "dogwood",
+      "row": 0,
+      "col": 1,
+      "rect": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "worldWidth": 0.6,
+      "aspect": 1
+    },
+    {
+      "species": "dogwood",
+      "row": 0,
+      "col": 2,
+      "rect": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "worldWidth": 0.6,
+      "aspect": 1
+    },
+    {
+      "species": "azalea",
+      "row": 1,
+      "col": 0,
+      "rect": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "worldWidth": 0.4,
+      "aspect": 1
+    },
+    {
+      "species": "azalea",
+      "row": 1,
+      "col": 1,
+      "rect": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "worldWidth": 0.4,
+      "aspect": 1
+    },
+    {
+      "species": "azalea",
+      "row": 1,
+      "col": 2,
+      "rect": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "worldWidth": 0.4,
+      "aspect": 1
+    }
+  ],
+  "source": "Built-in image generation, botanical flowering twig atlas, 2026-10-20",
+  "limitation": "Synthetic appearance texture, not a photographed on-site specimen. White azalea petals are tinted by bed/cultivar in the material."
+}

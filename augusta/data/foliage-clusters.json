@@ -1,0 +1,178 @@
+{
+  "image": "tex/foliage-clusters-v1.png",
+  "width": 1086,
+  "height": 1448,
+  "origin": "top-left",
+  "cells": [
+    {
+      "species": "pine",
+      "row": 0,
+      "col": 0,
+      "rect": [
+        0,
+        0,
+        362,
+        362
+      ],
+      "worldWidth": 0.8,
+      "aspect": 1.0,
+      "alphaCoverage": 0.3756
+    },
+    {
+      "species": "pine",
+      "row": 0,
+      "col": 1,
+      "rect": [
+        362,
+        0,
+        362,
+        362
+      ],
+      "worldWidth": 0.8,
+      "aspect": 1.0,
+      "alphaCoverage": 0.3496
+    },
+    {
+      "species": "pine",
+      "row": 0,
+      "col": 2,
+      "rect": [
+        724,
+        0,
+        362,
+        362
+      ],
+      "worldWidth": 0.8,
+      "aspect": 1.0,
+      "alphaCoverage": 0.3369
+    },
+    {
+      "species": "oak",
+      "row": 1,
+      "col": 0,
+      "rect": [
+        0,
+        362,
+        362,
+        362
+      ],
+      "worldWidth": 0.6,
+      "aspect": 1.0,
+      "alphaCoverage": 0.4011
+    },
+    {
+      "species": "oak",
+      "row": 1,
+      "col": 1,
+      "rect": [
+        362,
+        362,
+        362,
+        362
+      ],
+      "worldWidth": 0.6,
+      "aspect": 1.0,
+      "alphaCoverage": 0.3893
+    },
+    {
+      "species": "oak",
+      "row": 1,
+      "col": 2,
+      "rect": [
+        724,
+        362,
+        362,
+        362
+      ],
+      "worldWidth": 0.6,
+      "aspect": 1.0,
+      "alphaCoverage": 0.3947
+    },
+    {
+      "species": "holly",
+      "row": 2,
+      "col": 0,
+      "rect": [
+        0,
+        724,
+        362,
+        362
+      ],
+      "worldWidth": 0.45,
+      "aspect": 1.0,
+      "alphaCoverage": 0.3313
+    },
+    {
+      "species": "holly",
+      "row": 2,
+      "col": 1,
+      "rect": [
+        362,
+        724,
+        362,
+        362
+      ],
+      "worldWidth": 0.45,
+      "aspect": 1.0,
+      "alphaCoverage": 0.3772
+    },
+    {
+      "species": "holly",
+      "row": 2,
+      "col": 2,
+      "rect": [
+        724,
+        724,
+        362,
+        362
+      ],
+      "worldWidth": 0.45,
+      "aspect": 1.0,
+      "alphaCoverage": 0.368
+    },
+    {
+      "species": "magnolia",
+      "row": 3,
+      "col": 0,
+      "rect": [
+        0,
+        1086,
+        362,
+        362
+      ],
+      "worldWidth": 0.8,
+      "aspect": 1.0,
+      "alphaCoverage": 0.4954
+    },
+    {
+      "species": "magnolia",
+      "row": 3,
+      "col": 1,
+      "rect": [
+        362,
+        1086,
+        362,
+        362
+      ],
+      "worldWidth": 0.8,
+      "aspect": 1.0,
+      "alphaCoverage": 0.4848
+    },
+    {
+      "species": "magnolia",
+      "row": 3,
+      "col": 2,
+      "rect": [
+        724,
+        1086,
+        362,
+        362
+      ],
+      "worldWidth": 0.8,
+      "aspect": 1.0,
+      "alphaCoverage": 0.4988
+    }
+  ],
+  "source": "AI-generated botanical cluster atlas, built-in image generation, 2026-10-20",
+  "limitation": "Synthetic appearance asset, not scanned specimens or evidence of exact species at any stem."
+}

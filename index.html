@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Masters Screen Wireframe</title>
+<title>Masters Screen Wireframe · v2 merged</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* Stage is 16:9, authored at 5280 x 2970. UI sizes are designed for a 2435 mm wide panel (110" 16:9, ~2.17 px/mm):
@@ -715,13 +715,13 @@ const tourMemory={get(){try{return JSON.parse(localStorage.getItem("masters.tour
 const chosenTour=()=>TOURS.find(t=>t.id===tourMemory.get()?.id);
 // Tours are data. Chapter types:
 //   media     video chapter (plays in Unreal)
-//   filterset data story: its own filters; optional compare (filtersB + group labels, A teal / B orange); optional insight lines
+//   filterset data story: its own filters; optional compare (filtersB + group labels, A teal / B orange); optional insight lines;
+//             optional display (e.g. {zones:true,pins:true}) turned on for that chapter
 //   round     game focus: a sequence from data/meta.js (player, year, round, holes), optional holes + stroke range [from, to];
 //             preShot adds "Shot 0", the lie before the first shot of the range. content[i] sets each step's cards:
 //             insight true = the hole insight, "spot" = the field's odds from this spot (before the shot) or from where it finished,
 //             a string = that text, false = none; video true/false
 //   freeplay  explore the data
-// Tours without a definition here (the other pinned titles) play the Amen Corner chapters under their own title.
 const SEQ=MASTERS_DATA.sequences, STORY=MASTERS_DATA.stories;
 const LvD=(f={})=>[{Player:["Bernhard Langer"],Year:[2020,2020],Round:["R4"],...f},{Player:["Bryson DeChambeau"],Year:[2020,2020],Round:["R4"],...f}];
 const L20=STORY["Langer-2020-4"],D20=STORY["DeChambeau-2020-4"],par=d=>d===0?"even":(d>0?"+":"−")+Math.abs(d);
@@ -743,6 +743,39 @@ const TOUR_DEFS={
   rory:{title:"Rory's Approach",chapters:[
     {type:"round",title:"Rory McIlroy, 2025, Final Round, Hole No. 15",seq:"mcilroy-2025-15",shots:[2,2],preShot:true,
       content:[{insight:"spot",video:false},{insight:"spot",video:true}]}]}, // shot 0: "from this spot…", shot 1: insight + video
+  // the story audit (Figma, Betty's page): every story type the Creation Console can make has a chapter in one of these tours
+  back9:{title:"The Back Nine",chapters:[
+    {type:"filterset",title:"How the field plays 12",filters:{Hole:["12"]}},                                   // A1 hole profile
+    {type:"filterset",title:"Into Rae's Creek on 12",filters:{Hole:["12"],Region:["Water"]}},                 // A4 trouble
+    {type:"filterset",title:"Every eagle on 13 and 15",filters:{Hole:["13","15"],Score:["Eagle"]}},           // A3 outcome
+    {type:"filterset",title:"Where Sunday tee shots finished on 16",filters:{Hole:["16"],Year:[2024,2024],Round:["R4"],Shot:["Tee"]},
+      display:{zones:true,pins:true}},                                                                        // A6 landing zones + day's pin
+    {type:"freeplay",title:"Explore the data"}]},                                                             // D2
+  champs:{title:"Champions' Moments",chapters:[
+    {type:"media",title:"The Green Jacket",n:1,length:"45 s"},                                                // D1 video
+    {type:"filterset",title:"Champions vs the field into 13",headline:"Champions vs the field",
+      filters:{Hole:["13"],Shot:["Approach"],Trophy:["Masters champion"]},filtersB:{Hole:["13"],Shot:["Approach"],Trophy:["Never won"]},
+      groups:["Masters champions","Never won"]},                                                              // B3 champions vs field
+    {type:"filterset",title:"Scottie Scheffler on 13, Sunday 2024",
+      filters:{Player:["Scottie Scheffler"],Hole:["13"],Year:[2024,2024],Round:["R4"],Stroke:[1,3]}},          // A7 player sequence
+    {type:"round",title:"Rory McIlroy, 2025, Final Round, Hole No. 15",seq:"mcilroy-2025-15",shots:[2,2],preShot:true,
+      content:[{insight:"spot",video:false},{insight:"spot",video:true}]},                                     // C1 signature shot
+    {type:"round",title:"Rory McIlroy, 2025, Final Round, Hole No. 13",seq:"mcilroy-2025-amen",holes:[13]},   // C2 one hole
+    {type:"freeplay",title:"Explore the data"}]},
+  decade:{title:"Ten Years at Augusta",chapters:[
+    {type:"filterset",title:"Drives over 320 yards",filters:{Shot:["Tee"],Distance:[320,579.37]}},           // A5 distance
+    {type:"filterset",title:"16, then and now",headline:"16, then and now",
+      filters:{Hole:["16"],Year:[2016,2019]},filtersB:{Hole:["16"],Year:[2023,2026]},groups:["2016–2019","2023–2026"]}, // B2 era vs era
+    {type:"filterset",title:"Thursday vs Sunday on 12",headline:"Thursday vs Sunday on 12",
+      filters:{Hole:["12"],Round:["R1"]},filtersB:{Hole:["12"],Round:["R4"]},groups:["Thursday","Sunday"]},  // B4 round pressure
+    {type:"freeplay",title:"Explore the data"}]},
+  slam:{title:"Rory's Grand Slam",chapters:[
+    {type:"media",title:"The Grand Slam",n:2,length:"90 s"},
+    {type:"filterset",title:"Rory McIlroy's approach shots, 2025",filters:{Player:["Rory McIlroy"],Year:[2025,2025],Shot:["Approach"]}},
+    {type:"round",title:"McIlroy through Amen Corner",seq:"mcilroy-2025-amen"},
+    {type:"round",title:"Rory McIlroy, 2025, Final Round, Hole No. 15",seq:"mcilroy-2025-15",shots:[2,2],preShot:true,
+      content:[{insight:"spot",video:false},{insight:"spot",video:true}]},
+    {type:"freeplay",title:"Explore the data"}]},
 };
 // game focus steps: every stroke with a flight in the range (a drop is shown with the next shot, not a step); sim.js reads these
 function focusSteps(c){
@@ -1344,6 +1377,6 @@ TOUR=tourFor(chosenTour());
 addEventListener("sim-ready",()=>render());
 addEventListener("resize",fit);fit();applyCtrl();renderFp();render();
 </script>
-<script type="module" src="sim.js?v=44"></script>
+<script type="module" src="sim.js?v=47"></script>
 </body>
 </html>
