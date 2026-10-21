@@ -282,7 +282,7 @@ body{display:flex;flex-direction:column}
 .phx{width:80px;height:80px;margin-right:-16px;display:grid;place-items:center;background:none;border:0;border-radius:var(--r);color:var(--text);cursor:pointer}
 .phx:active{background:var(--layer-selected)}
 .xclose{position:absolute;top:16px;right:16px;margin:0;z-index:1}
-#campad,#sound,#more,#tourPop,#tourList,#confirm{position:relative}#campad .ph,#more .mh:first-of-type,#sound h3,#tourList h3,#tourPop h3{padding-right:110px}.phx svg{width:40px;height:40px;fill:currentColor}
+#sound,#more,#tourPop,#tourList,#confirm{position:relative} /* not #campad: it is absolutely placed beside the Camera button (an id here would pull it into the column) */#campad .ph,#more .mh:first-of-type,#sound h3,#tourList h3,#tourPop h3{padding-right:110px}.phx svg{width:40px;height:40px;fill:currentColor}
 .cph{display:flex;justify-content:space-between;align-items:center;font-size:32px}
 .fitbtn{display:flex;align-items:center;gap:10px;font-size:28px}
 .fitbtn svg{width:32px;height:32px;fill:currentColor}
