@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.3 · 22 Oct 2026
+
+### Freeplay
+- **Compare is no longer a filter tile.** It is a row above the tiles: one Compare button, then Group A | Group B as two tiles with a badge in the group's colour; End compare sits at the right of the Filters header. The tiles and the open control edit the selected group; set tiles carry the group's colour, and the panel title names it ("Hole · Group B").
+- **Choosing holes in the Hole filter frames them.** No other filter moves the camera.
+- **Back to tour from Freeplay is a cut**, like going in.
+- The filter panel is centred on the presenter column. The hole list is two wide, with full hole names.
+- Next / Previous leave the column in Freeplay (it has no steps), making room for the tiles.
+- The Freeplay group sits midway in the column: even space to the views above and to Sound / More below.
+
+### Presenter column
+- Larger: the controls are at what UI size 100 used to give (scale 0.845). Audience sizes are unchanged.
+- Every button is a 200 px square (views, Next / Previous, Freeplay, filter tiles, End | Reset view).
+- The Idle Freeplay button is green, like the other primary actions.
+
+### Course
+- The land beyond the course is a muted woodland green with faint contours instead of near-black, so the course no longer reads as an island.
+
 ## v2.2 · 22 Oct 2026
 
 ### Transitions: the rules

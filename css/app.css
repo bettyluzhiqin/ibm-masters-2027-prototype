@@ -52,12 +52,12 @@ body{display:flex;flex-direction:column}
 .btn.nav{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:22px 20px 18px 22px;font-size:28px;line-height:1.2;text-align:left}
 .btn.nav span{order:-1}
 .btn.nav svg{width:84px;height:84px;align-self:flex-end}
-.btn.nav.next{height:250px;background:var(--interactive);color:#fff;font-weight:600}
+.btn.nav.next{height:200px;background:var(--interactive);color:#fff;font-weight:600}
 .btn.nav.next:active{background:var(--interactive-active)}
-.btn.nav.prev{height:250px;background:var(--layer-accent);color:var(--text)}
+.btn.nav.prev{height:200px;background:var(--layer-accent);color:var(--text)}
 .btn.nav.prev:active{background:var(--layer-selected)}
 .btn.nav:disabled{background:var(--layer-accent);color:var(--text)}
-.btn.hero{height:256px;background:transparent;color:var(--text);box-shadow:inset 0 0 0 3px var(--text);
+.btn.hero{height:200px;background:transparent;color:var(--text);box-shadow:inset 0 0 0 3px var(--text);
   display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:22px 20px 18px 22px;
   font-size:28px;font-weight:400;line-height:1.2;text-align:left}
 .btn.hero span{order:-1;max-width:100%}
@@ -154,20 +154,14 @@ body{display:flex;flex-direction:column}
 .srow .sw{width:40px;height:12px;display:inline-block}
 .srow b{font-weight:600;margin-right:8px}
 .srow .count{margin-left:12px}
-/* compare: mode switcher + group switcher, same content-switcher style as the rest */
-.cmp{display:flex;gap:24px;align-items:center;padding:0 0 8px;height:110px}
-.cmp .mode{flex:none;width:420px}
 .seg.off{opacity:.3;pointer-events:none}
-.grp{flex:1}
-.grp .chip{display:flex;gap:14px;align-items:center;justify-content:center}
-.grp .chip i{width:32px;height:12px;display:inline-block}
 /* summary has buttons: presenter side. Colour key is read-only: audience side */
 .stage[data-side=right] .summary{right:80px}
 .stage[data-side=left] .summary{left:80px}
 
 /* freeplay panel */
 /* fixed size: switching tabs or filters never resizes the panel (tallest content, players starting with S, is ~1100px with the compare row) */
-.fp{width:1150px;height:1770px;padding:0 0 40px;display:flex;flex-direction:column;gap:28px;margin-top:180px}
+.fp{width:1150px;height:1770px;padding:0 0 40px;display:flex;flex-direction:column;gap:28px} /* centred on the column, like the dock */
 #fpBody{flex:1;min-height:0;overflow:hidden}
 /* filters accordion: Carbon-style rows; the open row's control sits right under it */
 .acc{display:flex;flex-direction:column;border-top:2px solid var(--border-subtle)}
@@ -225,7 +219,7 @@ body{display:flex;flex-direction:column}
 .pgrid{grid-template-columns:repeat(2,1fr)} /* 2 per row: long surnames fit */
 .sgrid{grid-template-columns:repeat(4,1fr)}
 /* hole tiles: number + name side by side, 3 per row so the names read */
-.hgrid{grid-template-columns:repeat(3,1fr)}
+.hgrid{grid-template-columns:repeat(2,1fr)} /* two wide: full hole names, a calmer list */
 .paint.grid.hgrid .chip{flex-direction:row;align-items:baseline;justify-content:flex-start;gap:16px;padding:20px 22px;text-align:left}
 .paint.grid.hgrid .chip b{font-size:34px;min-width:44px}
 .paint.grid.hgrid .chip span{font-size:26px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -350,14 +344,14 @@ body{display:flex;flex-direction:column}
 .sidecol .dock{margin-top:0}
 .dockgrp{display:flex;flex-direction:column;gap:20px}
 /* the presenter column runs the height of the screen: views pinned to the top, sound and More to the bottom,
-   the tour and Freeplay controls in the middle. Bigger targets: every button at least 200 × 156 stage px (~9 × 7 cm on the 110") */
+   the tour and Freeplay controls in the middle. Bigger targets: every button a 200 stage px square (~9 cm on the 110") */
 .sidecol{align-self:stretch;margin:72px 0;justify-content:space-between}
 .sidecol .dockgrp{flex:1}
 .sidecol .dockgrp>.dock:first-child,.sidecol .dockgrp>.dock:last-child{margin-top:auto}
 /* pop-ups open beside the button that opened them: Sound, More and their dialogs sit at the bottom with those buttons */
 .near>#sound,.near>#more,.near>#tourPop,.near>#confirm{align-self:flex-end;margin:0 0 72px}
 .quickbar{display:flex;flex-direction:column;gap:4px;padding:12px;zoom:var(--ui)}
-.qb{width:200px;height:156px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0;font:inherit;color:var(--text);background:transparent;border:0;border-radius:var(--r);cursor:pointer}
+.qb{width:200px;height:200px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0;font:inherit;color:var(--text);background:transparent;border:0;border-radius:var(--r);cursor:pointer}
 .qb svg{width:76px;height:76px;fill:currentColor} /* bigger icons for the bigger targets */
 .qb .chev{display:flex}
 .qb .chev svg{width:28px;height:28px}
@@ -595,11 +589,13 @@ body{letter-spacing:var(--track-body);-webkit-font-smoothing:antialiased;text-re
 
 /* Freeplay: the dock's middle group holds End and every filter category, stacked two wide (exploration A) */
 .dock.fpmode{display:grid;grid-template-columns:200px 200px;gap:4px}
-.dock.fpmode #heroBtn,.dock.fpmode #fpReset{width:auto;height:150px} /* End | Reset view */
+.dockgrp:has(.fpmode)>.dock:first-child{display:none} /* Freeplay has no Next / Previous: the tiles take their room */
+.sidecol .dockgrp>.dock.fpmode{margin-top:auto} /* and sit midway: even space above (views) and below (sound, More) */
+.dock.fpmode #heroBtn,.dock.fpmode #fpReset{width:auto;height:200px} /* End | Reset view */
 .fcats{grid-column:1/3;display:grid;grid-template-columns:200px 200px;gap:4px}
 .fcats[hidden]{display:none}
 .fch{grid-column:1/3;font-size:22px;font-weight:600;letter-spacing:var(--track-label);text-transform:uppercase;color:var(--text-3);padding:18px 6px 8px}
-.ftile{position:relative;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px 8px;font:inherit;color:var(--text);
+.ftile{position:relative;height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px 8px;font:inherit;color:var(--text);
   background:var(--layer-accent);border:0;border-radius:var(--r);cursor:pointer}
 .ftile svg{width:56px;height:56px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .ftile .lb{font-size:22px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
@@ -607,6 +603,19 @@ body{letter-spacing:var(--track-body);-webkit-font-smoothing:antialiased;text-re
 .ftile.has{background:var(--inverse);color:var(--inverse-text)}
 .ftile.open{box-shadow:inset 0 0 0 4px var(--masters-yellow)}
 .ftile:active{filter:brightness(1.2)}
+/* Compare: the row above the tiles. Off: one wide button. On: Group A | Group B as tiles on the filter grid (a badge in the
+   group's colour, the selected group solid); the tiles edit that group, and set tiles carry its colour along the bottom edge.
+   End compare sits at the right of the Filters header */
+.fcmp{grid-column:1/3;display:grid;grid-template-columns:200px 200px;gap:4px;margin-bottom:12px}
+.fcmp .wide{grid-column:1/-1;height:120px;flex-direction:row;gap:16px}
+.fcmp .fg i{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:28px;font-weight:600;color:#0b1a12}
+.fcmp .fg.on{background:var(--inverse);color:var(--inverse-text)}
+.fch{display:flex;align-items:center;justify-content:space-between}
+.fend{display:flex;align-items:center;gap:8px;height:64px;padding:0 14px;margin:-12px -6px -8px 0;border:0;border-radius:var(--r);background:none;color:var(--text);font:inherit;font-size:22px;font-weight:600;letter-spacing:var(--track-label);text-transform:uppercase;cursor:pointer}
+.fend[hidden]{display:none}
+.fend svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.fend:active{background:var(--layer-selected)}
+.fcats .ftile[data-k].has{box-shadow:inset 0 -8px 0 var(--grp)}
 /* the panel shows one category: it sizes to its control */
 .fp{height:auto;max-height:1770px}
 .accbody.single{border-radius:var(--r)}

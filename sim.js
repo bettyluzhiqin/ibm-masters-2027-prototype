@@ -45,11 +45,11 @@ function update(S, v) {
   const one = picked && new Set(picked).size === 1 ? picked[0] : null;
   const hole = fp && S.flyHole ? HOLES[S.flyHole - 1] : one ? HOLES[+one - 1] : null; // the hole the selection is on, if just one
 
-  // the camera moves when the story moves on. Freeplay is the visitor's: only entering it, Reset view, Frame selection
-  // and tapping a hole move the camera there, never a filter change
+  // the camera moves when the story moves on. Freeplay is the visitor's: only entering it, Reset view, Frame selection,
+  // tapping a hole and choosing holes in the Hole filter move the camera there, never another filter
   const camKey = view === "idle" ? "idle"
     : view === "round" ? ["round", ch.title, S.step, S.frameTick, S.resetTick].join()
-    : fp ? ["freeplay", S.flyHole, S.frameTick, S.resetTick].join()
+    : fp ? ["freeplay", S.flyHole, String(picked || ""), S.frameTick, S.resetTick].join()
     : ["filterset", hole?.n, dataKey, S.frameTick, S.resetTick].join();
   if (camKey !== last.cam) cameraFor(S, view, ch, hole, filtersB);
   if (camKey !== last.cam || view !== "round") showLie(view === "round" ? focusShot : null);
@@ -64,11 +64,11 @@ function cameraFor(S, view, ch, hole, filtersB) {
   // the course wasn't on screen just before (Idle, a video chapter, the first frame): the camera is already at the view, no move.
   // The content changes kind (data story ↔ game focus): a cut, dipping through the night green, like a change of scene on TV.
   // Otherwise (the next data story, the next hole): a calm move.
-  const fromIdle = !last.view || last.view === "idle";
+  const fromIdle = !last.view || last.view === "idle", fromFp = last.view === "freeplay" && view !== "freeplay"; // back to the tour: a cut
   // a new subject or a new place also cuts: another player (Langer's shot, then DeChambeau's) or another hole (the next hole
   // in game focus, the next data story elsewhere). The camera only travels within a hole.
   const story = ["filterset", "round"], who = view === "round" ? playerOf(ch, S.step) : null, where = holeOf(view, ch, S.step, hole);
-  const newKind = story.includes(last.view) && story.includes(view) &&
+  const newKind = fromFp || story.includes(last.view) && story.includes(view) &&
     (last.view !== view || (view === "round" && last.who && last.who !== who) || (last.where !== "course" && where !== "course" && last.where !== where));
   // (the whole round → one of its holes, or back out, is the same story narrowing in: a camera move, not a cut)
   const moveTo = (to, name) => fromIdle ? jumpTo(to) : newKind ? cutTo(to, "cut") : travelTo(to, { name });
@@ -89,11 +89,11 @@ function cameraFor(S, view, ch, hole, filtersB) {
     return play([moveTo(to, "to the view")], to);
   }
   // Freeplay. Entering it is a change of mode: a cut to the whole course (from Idle: already there). Inside it, the visitor
-  // steers: Reset view, Frame selection and tapping a hole move the camera there
+  // steers: Reset view, Frame selection, tapping a hole and the Hole filter move the camera there (the chosen hole or holes)
   const name = "Orbit";
   if (last.view !== "freeplay") { const to = preset(name, null, COURSE_BOX); return play([fromIdle ? jumpTo(to) : cutTo(to, "cut to Freeplay")]); }
   const frameIt = S.frameTick !== last.frame;
-  go(S.resetTick !== last.reset ? preset(name, null, COURSE_BOX) : frameIt ? preset(name, null, frameBox) : preset(name, HOLES[S.flyHole - 1] || null, frameBox));
+  go(S.resetTick !== last.reset ? preset(name, null, COURSE_BOX) : frameIt ? preset(name, null, frameBox) : preset(name, hole, frameBox));
 }
 
 /* ---------- game focus: the insight card is pinned to the shot (as v1) ---------- */

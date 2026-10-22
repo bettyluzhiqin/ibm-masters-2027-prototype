@@ -1,8 +1,8 @@
 // Freeplay filters: every category as a tile in the dock (stacked two wide, a set one light with its value); tapping a tile
-// opens just that filter's control in the panel beside the dock. Compare is a tile too.
+// opens just that filter's control in the panel beside the dock. Compare is not a filter: it is the row above the tiles that
+// says which group the tiles edit (off: one Compare button; on: Group A | Group B, with End compare in the Filters header).
 /* ---------- freeplay panel ---------- */
 const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
-const chip=(label,on,fn)=>{const b=el("button","chip",label);b.setAttribute("aria-pressed",!!on);b.onclick=e=>{e.stopPropagation();sfx.play("tick");fn();renderFp();render()};return b};
 const isOpen=(f,hi)=>f.open&&hi>=f.max;
 // compare: two filter groups. The panel edits the active one; A is S.filters, B is S.filtersB.
 const SCORE_COL=["#d4bbff","#ee5396","#ffafd2","#f1c21b","#f6f2ff","#82cfff","#78a9ff","#4589ff"]; // design colour key, same order as MASTERS_DATA.scores
@@ -31,31 +31,31 @@ const CAT_ICON={Hole:'<path d="M7 21V3h11l-3 4 3 4H7"/><path d="M4 21h8"/>',Year
   Shot:'<path d="M4 19C7 10 13 6 20 6"/><circle cx="20" cy="6" r="1.6"/>',Stroke:'<path d="M9 4 7 20M17 4l-2 16M4 9h16M3 15h16"/>',
   Region:'<path d="M12 4 21 9l-9 5-9-5z"/><path d="M3 14l9 5 9-5"/>',Sector:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".8"/>',
   Distance:'<path d="M3 15 15 3l6 6L9 21z"/><path d="M7 11l2 2M10 8l2 2M13 5l2 2"/>',Score:'<circle cx="12" cy="12" r="8"/><path d="M8 12h8"/>',
-  Trophy:'<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/>',
-  Compare:'<circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5"/>'};
+  Trophy:'<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/>'};
+const CMP_ICON='<svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5"/></svg>';
 const CAT_LABEL={Stroke:"Strokes",Trophy:"Players"};
-{const box=$("#fcats");[...Object.keys(FILTERS),"Compare"].forEach(k=>{const b=el("button","ftile");b.dataset.k=k;
+const setCompare=on=>{if(on===S.compare)return;S.compare=on;if(on){S.filtersB=structuredClone(S.filters);S.group="B"}else S.group="A";live()};
+{const box=$("#fcats"),row=el("div","fcmp");box.append(row);Object.keys(FILTERS).forEach(k=>{const b=el("button","ftile");b.dataset.k=k;
   b.innerHTML=`<svg viewBox="0 0 24 24">${CAT_ICON[k]||""}</svg><span class="lb">${CAT_LABEL[k]||k}</span><span class="v"></span>`;
   b.onclick=e=>{e.stopPropagation();const same=S.panel==="filters"&&S.fpFilter===k;S.fpFilter=same?null:k;S.panel=same?null:"filters";
-    if(k==="Compare"&&!same&&!S.compare){S.compare=true;S.filtersB=structuredClone(S.filters);S.group="B";live()}
     sfx.play(same?"close":"open");renderFp();render()};
   box.append(b)})}
-function renderFTabs(){ // the tiles' state: set filters light with their value, the open one marked
-  document.querySelectorAll(".ftile[data-k]").forEach(t=>{const k=t.dataset.k,v=k==="Compare"?(S.compare?(S.group==="B"?"Editing B":"Editing A"):null):F()[k];
-    t.querySelector(".v").textContent=v?(k==="Compare"?v:fmt(k,v)):"";t.classList.toggle("has",!!v);t.classList.toggle("open",S.panel==="filters"&&S.fpFilter===k)});
+function renderCmp(){ // the Compare row: one button, or the two groups the tiles follow; "End compare" sits in the Filters header
+  const row=$("#fcats .fcmp"),b=(cls,html,fn)=>{const x=el("button",cls);x.innerHTML=html;x.onclick=e=>{e.stopPropagation();sfx.play("tick");fn();renderFp();render()};return x};
+  row.replaceChildren(...(!S.compare?[b("ftile wide",CMP_ICON+'<span class="lb">Compare</span>',()=>setCompare(true))]
+    :["A","B"].map(g=>{const x=b("ftile fg"+(S.group===g?" on":""),`<i style="background:${GROUP_COL[g]}">${g}</i><span class="lb">Group ${g}</span>`,()=>S.group=g);x.setAttribute("aria-pressed",S.group===g);return x})));
+  let end=$("#fcats .fend");if(!end){end=b("fend",'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>End compare',()=>setCompare(false));$("#fcats .fch").append(end)}
+  end.hidden=!S.compare;
+  $("#fcats").style.setProperty("--grp",S.compare?GROUP_COL[S.group]:"transparent");
 }
-function renderFp(){ // the panel: just the tapped category's control (and the group switch while comparing)
+function renderFTabs(){ // the tiles' state: set filters light with their value, the open one marked
+  renderCmp();
+  document.querySelectorAll(".ftile[data-k]").forEach(t=>{const k=t.dataset.k,v=F()[k];
+    t.querySelector(".v").textContent=v?fmt(k,v):"";t.classList.toggle("has",!!v);t.classList.toggle("open",S.panel==="filters"&&S.fpFilter===k)});
+}
+function renderFp(){ // the panel: just the tapped category's control, for the group the Compare row has selected
   const body=$("#fpBody");body.innerHTML="";const k=S.fpFilter;
-  $("#fpTitle").textContent=!k?"Filters":k==="Compare"?"Compare":CAT_LABEL[k]||k;
-  const wrap=(cls,kids)=>{const d=el("div",cls);d.append(...kids);body.append(d);return d};
-  if(S.compare||k==="Compare"){
-    const cmp=el("div","cmp");
-    const setCompare=on=>{if(on===S.compare)return;S.compare=on;if(on){S.filtersB=structuredClone(S.filters);S.group="B"}else S.group="A";live()};
-    if(k==="Compare")cmp.append(wrap("seg mode",[chip("One group",!S.compare,()=>setCompare(false)),chip("Compare",S.compare,()=>setCompare(true))]));
-    if(S.compare){const sw=el("div","seg grp");["A","B"].forEach(g=>{const b=chip("",S.group===g,()=>S.group=g);
-      b.innerHTML=`<i style="background:${GROUP_COL[g]}"></i>Group ${g}`;sw.append(b)});cmp.append(sw)}
-    body.append(cmp);
-  }
+  $("#fpTitle").textContent=!k?"Filters":(CAT_LABEL[k]||k)+(S.compare?" · Group "+S.group:"");
   if(k&&FILTERS[k]){const f=FILTERS[k],box=el("div","accbody single"),head=el("div","fhead");head.append(el("div","hint",f.hint||HINT[f.ui]));
     const clr=el("button","link","Clear");clr.onclick=e=>{e.stopPropagation();setF(k,f.ui==="range"?[f.min,f.max]:[]);renderFp()};head.append(clr);
     box.append(head,f.ui==="paint"?paint(k,f):f.ui==="range"?range(k,f):players(k,f));body.append(box);}

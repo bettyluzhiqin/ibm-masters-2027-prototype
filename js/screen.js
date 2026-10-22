@@ -23,7 +23,7 @@ function applyScreen(mm,size=window.UI_SIZE??50){
 // Keep the course visible: presenter controls are compact (only the presenter, at arm's length, needs them);
 // audience-facing content stays larger so it reads from the back of the room.
 // reading = what the audience reads from the sofa (overview, insight): ~19 mm body text, ~42 mm headlines on a 2.43 m screen
-const SIZE={controls:0.65,audience:0.8,reading:1.3};
+const SIZE={controls:0.845,audience:0.8,reading:1.3};
 applyScreen(+new URLSearchParams(location.search).get("width")||screenMem.get()||SCREENS.augusta.mm,uiSizeMem.get()??50); // ?width=<mm> still overrides the screen
 
 // touch kiosk: no long-press menus, no double-tap or pinch zoom of the page itself (pads and sliders handle their own gestures)

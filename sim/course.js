@@ -2,7 +2,8 @@
 // shares: our data's coordinates → its world (metres), terrain height, the 18 holes. This module resolves once the course is up.
 export const frame = document.getElementById("frame");
 export const ifr = document.createElement("iframe");
-ifr.id = "simCanvas"; ifr.src = "augusta/index.html?v=2"; // bump when augusta/ changes: the frame keeps its own cache ifr.title = "Augusta National course"; ifr.style.border = "0";
+ifr.id = "simCanvas"; ifr.src = "augusta/index.html?v=3"; // bump when augusta/ changes: the frame keeps its own cache
+ifr.title = "Augusta National course"; ifr.style.border = "0";
 frame.prepend(ifr);
 // a veil over the course in the screen's night green: Idle fades through it from one hole to the next instead of flying
 export const veil = document.createElement("div");
