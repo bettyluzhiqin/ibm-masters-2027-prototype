@@ -132,6 +132,9 @@ SEQUENCES = {  # id: player last name, year, round, holes, stroke shown in the s
     "langer-2020-7": ("Langer", 2020, 4, (7,), {7: 2}),
     "dechambeau-2020-7": ("DeChambeau", 2020, 4, (7,), {7: 2}),
     "mcilroy-2025-15": ("McIlroy", 2025, 4, (15,), {15: 2}),
+    # side by side (C3): the same holes for both players, hole by hole
+    "langer-2020-duel": ("Langer", 2020, 4, (7, 13, 14), {7: 2, 13: 2, 14: 2}),
+    "dechambeau-2020-duel": ("DeChambeau", 2020, 4, (7, 13, 14), {7: 2, 13: 2, 14: 2}),
 }
 _field = {}
 def field(hole):  # every lie on this hole 2016-2026, with that player's final strokes on the hole
