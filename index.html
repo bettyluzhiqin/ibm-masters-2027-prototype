@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Masters Screen Wireframe · v2 merged</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=40">
+<link rel="stylesheet" href="css/app.css?v=64">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.webgpu.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.webgpu.js","three/tsl":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.tsl.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"}}</script>
 </head>
 <body>
@@ -17,18 +17,21 @@
   <!-- tap Idle = iPad handshake (simulated). F on Idle = Freeplay without a tour. -->
   <!-- prototype stand-in for the iPad handshake: tap = send a tour, press and hold = send Freeplay -->
   <!-- Idle doubles as the start moment: the remembered tour's title and "tap to begin"; a welcome when no tour is set -->
-  <!-- the other way in from Idle: the same Freeplay button as in a tour, in the same place (also: press and hold anywhere, or F) -->
-  <button data-v="idle" class="btn hero go idlefp" id="idleFp"></button>
   <div data-v="idle" class="center scrim" id="idleArea">
     <div><p id="idleKicker" style="margin:0 0 24px"></p><h1 id="idleTitle"></h1><p class="pulse" id="idleHint"></p></div>
   </div>
-  <!-- tour picker: discreet. It opens by itself only on first setup, or when the remembered tour is no longer in the list -->
-  <div data-v="idle" class="tourpick">
+  <!-- Idle's two ways in, as one group in the presenter column's place: Tour (opens the tour list beside it) and Freeplay
+       (the same button as in a tour; also press and hold anywhere, or F). The list opens by itself on first setup, or when
+       the remembered tour is no longer in the list -->
+  <div data-v="idle" class="idlecol">
+    <div class="wire dock idlegrp" id="idleGrp">
+      <button class="btn hero tool" id="tourChip"></button>
+      <button class="btn hero go" id="idleFp"></button>
+    </div>
     <div class="wire tourlist" id="tourList" hidden><h3 id="tlTitle"></h3><p id="tlNote"></p><div id="tlRows"></div>
       <!-- list upkeep: pull the pinned tours from the iPad (Creation Console), or forget this screen's default tour -->
       <div class="tlfoot"><button class="link" id="tlSync"><svg viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></svg><span>Sync with iPad</span></button><span id="tlSynced"></span>
         <button class="link danger" id="tlClear">Clear default</button></div></div>
-    <button class="tourchip" id="tourChip"></button>
   </div>
 
 
@@ -39,7 +42,7 @@
 
   <!-- OVERVIEW: one compact card, audience side, top corner. Small label (what view) > one big headline > short context.
        Game focus: player, scorecard for the holes in the sequence, this hole's shots. Data/Freeplay: shot count, filter tags, colour key -->
-  <div class="overview" id="overview"><div class="wire ov" id="ov"></div></div>
+  <div class="overview" id="overview"><div class="wire ov" id="ov"></div><div class="wire ov ckey" id="ckey" hidden></div></div><!-- colour key: its own small card, after the overview -->
 
 <!-- insight (data chapter + game focus, one design) and, in game focus, the video of the hole's key shot. Audience side, bottom corner -->
   <div class="gfstack" id="gfStack">
@@ -80,7 +83,8 @@
       <button class="qb" data-act="toggleNames" id="qbNames" aria-label="Hole names"><svg viewBox="0 0 32 32"><path d="M10,14a4,4,0,1,1,4-4A4.0045,4.0045,0,0,1,10,14Zm0-6a2,2,0,1,0,1.998,2.0044A2.002,2.002,0,0,0,10,8Z"/><path d="M16.6436,29.4145,2.5858,15.3555A2,2,0,0,1,2,13.9414V4A2,2,0,0,1,4,2h9.9413a2,2,0,0,1,1.4142.5858L29.4144,16.6436a2.0005,2.0005,0,0,1,0,2.8285l-9.9424,9.9425a2.0008,2.0008,0,0,1-2.8285,0ZM4,4v9.9417L18.0578,28,28,18.0579,13.9416,4Z"/></svg></button>
       <button class="qb" data-act="showArcs" id="qbShots" aria-label="Arcs"><svg viewBox="0 0 32 32" class="stroke"><path d="M5 27C8 15 16 8 27 6"/><path d="M9 28C12 18 18 12 27 10"/><path d="M13 29C15 21 20 16 27 14"/></svg></button>
       <button class="qb" data-act="showBalls" id="qbBalls" aria-label="Balls"><svg viewBox="0 0 32 32" class="stroke"><circle cx="16" cy="16" r="11"/><circle cx="12" cy="12" r="1.2" class="dot"/><circle cx="17" cy="11" r="1.2" class="dot"/><circle cx="21" cy="15" r="1.2" class="dot"/><circle cx="13" cy="17" r="1.2" class="dot"/><circle cx="18" cy="19" r="1.2" class="dot"/><circle cx="14" cy="22" r="1.2" class="dot"/></svg></button>
-      <button class="qb qbreset" data-act="resetView" id="qbReset" aria-label="Reset view"><svg viewBox="0 0 32 32"><path d="M18,28A12,12,0,1,0,6,16v6.2L2.4,18.6,1,20l6,6,6-6-1.4-1.4L8,22.2V16H8A10,10,0,1,1,18,26Z"/></svg></button>
+      <button class="qb" data-act="toggleKey" id="qbKey" aria-label="Colour key"><svg viewBox="0 0 32 32" class="stroke"><path d="M4 11c2-3.5 4.5-5 8-5"/><path d="M4 20c2-3.5 4.5-5 8-5"/><path d="M4 29c2-3.5 4.5-5 8-5"/><path d="M17 8h11M17 17h11M17 26h11"/></svg></button>
+      <button class="qb qbreset" data-act="resetView" id="qbReset" aria-label="Reset view"><svg viewBox="0 0 32 32" class="stroke"><path d="M4 11V4h7M21 4h7v7M28 21v7h-7M11 28H4v-7"/><circle cx="16" cy="16" r="3.2" class="dot"/></svg></button><!-- recentre: frame corners around a point, so it never reads as undo or Previous -->
     </div>
     <!-- camera options open right next to the Camera button -->
     <!-- the column in groups: tour (Next, Previous) | Freeplay + its Filters | settings (Sound, More) -->
@@ -92,7 +96,6 @@
       </div>
       <div class="wire dock">
         <button class="btn hero" id="heroBtn"></button>
-        <button class="btn hero tool" id="fpReset" hidden></button><!-- Freeplay: Reset view, next to End -->
         <!-- Freeplay: every filter category, stacked two wide; a set one is light and shows its value; tap one to open its control -->
         <div class="fcats" id="fcats" hidden><div class="fch">Filters</div></div>
       </div>
@@ -116,15 +119,13 @@
 
     <!-- More: grouped like a Carbon overflow menu. Section labels are quiet; the destructive action sits last, on its own -->
     <div class="wire pop menu" id="more" hidden>
+      <h3>More</h3>
       <div class="mh">Tour</div>
       <button class="item" data-act="askRestart"><svg viewBox="0 0 32 32"><path d="M26,18A10,10,0,1,1,16,8h6.1821l-3.5844,3.5854L20,13l6-6L20,1,18.5977,2.414,22.1851,6H16A12,12,0,1,0,28,18Z"/></svg>Restart tour…</button>
       <button class="item" data-act="askChangeTour"><svg viewBox="0 0 32 32"><path d="M10 6H28V8H10zM10 24H28V26H10zM10 15H28V17H10zM4 15H6V17H4zM4 6H6V8H4zM4 24H6V26H4z"/></svg><span id="miChange">Change tour…</span></button>
       <hr>
       <div class="mh">Screen</div>
       <div class="mrow"><span>Presenter side</span><div class="seg sidesw"><button class="chip" data-act="sideLeft">Left</button><button class="chip" data-act="sideRight">Right</button></div></div>
-      <!-- control height: moves the whole presenter zone (quick buttons, controls, side panels) up or down -->
-      <div class="mrow"><span>Control height</span><span class="muted" id="ctrlRead"></span></div>
-      <div class="ctrlh"><div class="track" id="ctrlTrack"><div class="fill"></div><i class="th"></i></div></div>
       <!-- screen size: venue presets, or drag the width; the UI resizes to keep the same physical size -->
       <div class="mrow"><span>Screen</span><span class="muted" id="scrRead"></span></div>
       <div class="mrow scrrow"><div class="seg scrsw" id="scrPresets"></div></div>
@@ -145,7 +146,7 @@
     <div class="fpcol" id="fpcol">
 
       <div class="wire fp" id="fp">
-        <div class="ph phrow"><span id="fpTitle">Filters</span><span class="phact"><button class="link" id="frameBtn">Frame selection</button><button class="link" id="clearAll">Clear all</button><button class="phx" id="fpClose" aria-label="Close filters"></button></span></div>
+        <div class="ph phrow"><span id="fpTitle">Filters</span><span class="phact"><button class="link" id="fpClear">Clear all</button><button class="phx" id="fpClose" aria-label="Close filters"></button></span></div>
         <div id="fpBody"></div>
       </div>
     </div>
@@ -172,16 +173,16 @@
 
 <script src="data/meta.js?v=12"></script><!-- real course + players, exported from the Data API database -->
 <script src="audio.js?v=8"></script>
-<script src="js/screen.js?v=3"></script>
+<script src="js/screen.js?v=4"></script>
 <script src="js/tours.js?v=4"></script>
-<script src="js/masters.js?v=1"></script>
-<script src="js/app.js?v=6"></script>
-<script src="js/freeplay.js?v=5"></script>
-<script src="js/render.js?v=25"></script>
+<script src="js/masters.js?v=7"></script>
+<script src="js/app.js?v=12"></script>
+<script src="js/freeplay.js?v=10"></script>
+<script src="js/render.js?v=33"></script>
 <script src="js/describe.js?v=1"></script>
-<script src="js/idle.js?v=4"></script>
+<script src="js/idle.js?v=7"></script>
 <script src="js/ticker.js?v=9"></script>
-<script src="js/loading.js?v=3"></script>
-<script type="module" src="sim.js?v=99"></script>
+<script src="js/loading.js?v=4"></script>
+<script type="module" src="sim.js?v=102"></script>
 </body>
 </html>

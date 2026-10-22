@@ -13,7 +13,7 @@ const screenMem=mem("masters.screen"), uiSizeMem=mem("masters.uisize");
 // UI size 0–100 fine-tunes on top of the screen preset: 50 = the recommended size for that screen, 0 = 0.7x, 100 = 1.3x
 const sizeMult=n=>0.7+n/100*0.6;
 // every scale is capped so the layout always fits the 16:9 stage (presenter column, filters, menus, audience cards)
-const CAP={controls:1.25,audience:1.5,reading:1.95};
+const CAP={controls:0.865,audience:1.5,reading:1.95}; // controls: the tallest column (a Freeplay chapter, comparing) fits the 2970 px stage up to ~0.87
 function applyScreen(mm,size=window.UI_SIZE??50){
   const base=Object.values(SCREENS).find(x=>x.mm===mm)?.scale??Math.sqrt(DESIGN_MM/mm); // other widths (?width=): between proportional and physical
   window.SCREEN_MM=mm; window.UI_SIZE=size; window.UI_SCALE=base*sizeMult(size);

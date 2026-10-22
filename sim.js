@@ -9,7 +9,7 @@ import { setTags, placeTags } from "./sim/tags.js";
 import { flightModel, flightPoint } from "./sim/flight.js";
 import { arcs, balls, buildArcs, advanceArcs, arcsReady, GROUP_COL } from "./sim/layers.js";
 import { focusGroup, buildFocus, showFocusStep, followStart, showLie, startFlight, stopFlight, flyShot, flying, flightNow, flightStatus } from "./sim/focus.js";
-import { cam, COURSE_BOX, preset, go, play, stopMoves, runMoves, moving, moveStatus, travelTo, jumpTo, cutTo, handBack, backToStory, orbitStep, idleNext, idleStop, steer, resetTouch, touchStatus } from "./sim/camera.js";
+import { cam, COURSE_BOX, preset, go, play, stopMoves, runMoves, moving, moveStatus, travelTo, jumpTo, cutTo, handBack, backToStory, orbitStep, idleNext, idleStop, steer, clampView, resetTouch, touchStatus } from "./sim/camera.js";
 
 const SIM_VIEWS = ["idle", "round", "filterset", "freeplay"];
 let last = {}, focusShot = null, counts = {}, rowsA = [], rowsB = null, frameBox = COURSE_BOX;
@@ -153,7 +153,7 @@ const toStage = v => { const p = v.project(camera); return [((p.x + 1) / 2) * ST
 function advance(dt) { // one frame of the data layer; the loop below calls it, and sim.advance() drives it headless
   advanceArcs(dt); placeTags();
   document.body.classList.toggle("cammoved", cam.user && (live.view === "filterset" || live.view === "round")); // shows Reset view in a tour
-  steer(dt);
+  steer(dt); clampView();
   runMoves(dt); flyShot(dt);
   orbitStep(dt); handBack(live.view === "filterset" || live.view === "round");
   shotLabels();

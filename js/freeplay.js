@@ -39,7 +39,10 @@ const setCompare=on=>{if(on===S.compare)return;S.compare=on;if(on){S.filtersB=st
   b.innerHTML=`<svg viewBox="0 0 24 24">${CAT_ICON[k]||""}</svg><span class="lb">${CAT_LABEL[k]||k}</span><span class="v"></span>`;
   b.onclick=e=>{e.stopPropagation();const same=S.panel==="filters"&&S.fpFilter===k;S.fpFilter=same?null:k;S.panel=same?null:"filters";
     sfx.play(same?"close":"open");renderFp();render()};
-  box.append(b)})}
+  box.append(b)});
+  // Clear all: the grid's last slot (beside Players). Clears the group being edited; dimmed when nothing is set
+  const c=el("button","ftile fclear");c.id="fClear";c.innerHTML='<svg viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/><path d="M16 16l5 5M21 16l-5 5"/></svg><span class="lb">Clear all</span>';
+  c.onclick=e=>{e.stopPropagation();const t=F();Object.keys(t).forEach(k=>delete t[k]);sfx.play("toggle");live();renderFp();render()};box.append(c)}
 function renderCmp(){ // the Compare row: one button, or the two groups the tiles follow; "End compare" sits in the Filters header
   const row=$("#fcats .fcmp"),b=(cls,html,fn)=>{const x=el("button",cls);x.innerHTML=html;x.onclick=e=>{e.stopPropagation();sfx.play("tick");fn();renderFp();render()};return x};
   row.replaceChildren(...(!S.compare?[b("ftile wide",CMP_ICON+'<span class="lb">Compare</span>',()=>setCompare(true))]
@@ -52,13 +55,17 @@ function renderFTabs(){ // the tiles' state: set filters light with their value,
   renderCmp();
   document.querySelectorAll(".ftile[data-k]").forEach(t=>{const k=t.dataset.k,v=F()[k];
     t.querySelector(".v").textContent=v?fmt(k,v):"";t.classList.toggle("has",!!v);t.classList.toggle("open",S.panel==="filters"&&S.fpFilter===k)});
+  $("#fClear").disabled=!Object.keys(F()).length;$("#fpClear").disabled=!(S.fpFilter&&F()[S.fpFilter]);
 }
 function renderFp(){ // the panel: just the tapped category's control, for the group the Compare row has selected
   const body=$("#fpBody");body.innerHTML="";const k=S.fpFilter;
-  $("#fpTitle").textContent=!k?"Filters":(CAT_LABEL[k]||k)+(S.compare?" · Group "+S.group:"");
-  if(k&&FILTERS[k]){const f=FILTERS[k],box=el("div","accbody single"),head=el("div","fhead");head.append(el("div","hint",f.hint||HINT[f.ui]));
-    const clr=el("button","link","Clear");clr.onclick=e=>{e.stopPropagation();setF(k,f.ui==="range"?[f.min,f.max]:[]);renderFp()};head.append(clr);
-    box.append(head,f.ui==="paint"?paint(k,f):f.ui==="range"?range(k,f):players(k,f));body.append(box);}
+  $("#fpTitle").innerHTML=!k?"Filters":`<svg viewBox="0 0 24 24">${CAT_ICON[k]||""}</svg>${CAT_LABEL[k]||k}${S.compare?`<small>Group ${S.group}</small>`:""}`;
+  // the control sits straight on the panel; "Clear all" (this filter) sits in the header beside ×, dimmed until something is set
+  const clr=$("#fpClear");clr.disabled=!(k&&F()[k]);
+  if(k&&FILTERS[k]){const f=FILTERS[k],box=el("div","accbody single");
+    clr.onclick=e=>{e.stopPropagation();setF(k,f.ui==="range"?[f.min,f.max]:[]);renderFp()};
+    if(f.hint)box.append(el("div","hint",f.hint)); // what the values mean (Strokes, Sector), not how to tap
+    box.append(f.ui==="paint"?paint(k,f):f.ui==="range"?range(k,f):players(k,f));body.append(box);}
   renderFTabs();
 }
 
@@ -105,39 +112,25 @@ function range(k,f){
 const LAST=new Map(MASTERS_DATA.players.map((n,i)=>[n,MASTERS_DATA.lastNames[i]])); // real last names from the data
 const surname=p=>LAST.get(p)||p.split(" ").at(-1); // "Fernandez de Oliveira", "Howell III"
 const initial=p=>surname(p).normalize("NFD")[0].toUpperCase(); // Åberg -> A
-function players(k,f){
-  const box=el("div","players"),letters=[...new Set(f.opts.map(initial))].sort();
-  const sel=()=>new Set(F()[k]||[]);
-  if(!S.pLetter) S.pLetter=initial((F()[k]||f.opts)[0]);
-  const top=el("div","fhead");top.append(el("span","muted",""));box.append(top);
-  // A–Z rail
-  const rail=el("div","rail"),tiles=el("div");
-  letters.forEach(L=>{const b=el("button",null,L);b.dataset.letter=L;rail.append(b)});
-  const draw=()=>{
-    const s2=sel();
-    rail.querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.letter===S.pLetter);
-      b.classList.toggle("has",f.opts.some(o=>initial(o)===b.dataset.letter&&s2.has(o)))});
-    top.lastChild.textContent=s2.size?s2.size+" selected":"";
-    // up to ~30 players per letter: the tiles scroll (drag), a tap toggles one
-    const grid=el("div","grid pgrid ptiles");
-    f.opts.filter(o=>initial(o)===S.pLetter).forEach(o=>{const b=el("button","chip");
-      b.innerHTML=`<b>${surname(o)}</b><small>${o.slice(0,-surname(o).length).trim()}${MASTERS.winners.includes(o)?" · Champion":""}</small>`;
-      b.setAttribute("aria-pressed",s2.has(o));
-      b.onclick=e=>{e.stopPropagation();const s3=sel();s3.has(o)?s3.delete(o):s3.add(o);b.setAttribute("aria-pressed",s3.has(o));sfx.play("tick");
-        setF(k,f.opts.filter(x=>s3.has(x)));tiles.dispatchEvent(new Event("pointerup"))};
-      grid.append(b)});
-    tiles.replaceChildren(grid);
-  };
-  let scrub=false;
-  const pickAt=e=>{const b=document.elementFromPoint(e.clientX,e.clientY)?.closest("[data-letter]");
-    if(b&&rail.contains(b)&&b.dataset.letter!==S.pLetter){S.pLetter=b.dataset.letter;sfx.play("tickSoft");draw()}};
-  rail.onpointerdown=e=>{scrub=true;rail.setPointerCapture(e.pointerId);pickAt(e)};
-  rail.onpointermove=e=>{if(scrub)pickAt(e)};
-  rail.onpointerup=rail.onpointercancel=()=>{scrub=false};
-  rail.onclick=e=>e.stopPropagation();
-  // tiles change selection: refresh letter dots and count without rebuilding the tiles mid-drag
-  tiles.addEventListener("pointerup",()=>{const s2=sel();rail.querySelectorAll("button").forEach(b=>b.classList.toggle("has",f.opts.some(o=>initial(o)===b.dataset.letter&&s2.has(o))));
-    top.lastChild.textContent=s2.size?s2.size+" selected":"";});
-  box.append(rail,tiles);draw();
+function players(k,f){ // a directory by surname (Figma "Player Selection"): letter sections of name cards, an A–Z index to jump
+  const box=el("div","pdir"),list=el("div","plist"),az=el("div","az"),sel=()=>new Set(F()[k]||[]),secs={};
+  const byL=new Map();[...f.opts].sort((a,b)=>surname(a).localeCompare(surname(b))).forEach(o=>{const L=initial(o);byL.has(L)?byL.get(L).push(o):byL.set(L,[o])});
+  const marks=()=>{const s2=sel();az.querySelectorAll("button").forEach(b=>b.classList.toggle("has",(byL.get(b.textContent)||[]).some(o=>s2.has(o))))};
+  for(const [L,ps] of [...byL].sort()){
+    const sec=el("section");sec.append(el("h5",null,L));const g=el("div","pcards");
+    ps.forEach(o=>{const b=el("button","pcard"),last=surname(o);b.innerHTML=`<span>${o.slice(0,-last.length).trim()}</span><span>${last}</span>`;
+      b.setAttribute("aria-pressed",sel().has(o));
+      b.onclick=e=>{e.stopPropagation();const s3=sel();s3.has(o)?s3.delete(o):s3.add(o);b.setAttribute("aria-pressed",s3.has(o));sfx.play("tick");setF(k,f.opts.filter(x=>s3.has(x)));marks()};
+      g.append(b)});
+    sec.append(g);list.append(sec);secs[L]=sec;
+  }
+  [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].forEach(L=>{const b=el("button",null,L);b.disabled=!secs[L];az.append(b)});
+  // tap or slide along the index: the list jumps to that letter
+  let scrub=false;const jump=e=>{const b=document.elementFromPoint(e.clientX,e.clientY)?.closest(".az button");
+    if(b&&!b.disabled&&secs[b.textContent])list.scrollTop=secs[b.textContent].offsetTop-list.offsetTop};
+  az.onpointerdown=e=>{scrub=true;az.setPointerCapture(e.pointerId);jump(e)};az.onpointermove=e=>{if(scrub)jump(e)};az.onpointerup=az.onpointercancel=()=>{scrub=false};
+  az.onclick=e=>e.stopPropagation();
+  box.append(list,az);marks();
+  const first=(F()[k]||[])[0];if(first)requestAnimationFrame(()=>{const s4=secs[initial(first)];if(s4)list.scrollTop=s4.offsetTop-list.offsetTop}); // open at the selection
   return box;
 }

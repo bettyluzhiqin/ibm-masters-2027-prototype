@@ -18,15 +18,14 @@ const TO_PAR={"Hole in One":"1","Albatross":"−3","Eagle":"−2","Birdie":"−1
 //  range: ordered numbers; drag two handles
 //  players: long list; A–Z surname rail (drag to scrub) + tiles for that letter, no typing
 const FILTERS={
-  Hole:{ui:"paint",layout:"grid hgrid",opts:Array.from({length:18},(_,i)=>String(i+1)),label:o=>`<b>${o}</b><span>${MASTERS.holes[o-1].name}</span>`}, // number + readable name
+  Hole:{ui:"paint",layout:"grid holes",opts:Array.from({length:18},(_,i)=>String(i+1)),label:o=>`<b>${o}</b>`}, // number only, round cells (css .holes)
   Year:{ui:"range",min:MASTERS_DATA.years[0],max:MASTERS_DATA.years.at(-1),step:1,ticks:[2016,2019,2022,2026],marks:true}, // slider; a tick for every year, labels on a few
-  Round:{ui:"paint",layout:"seg",opts:["R1","R2","R3","R4"]},
+  Round:{ui:"paint",layout:"grid rounds",opts:["R1","R2","R3","R4"],label:o=>`<b>${o.slice(1)}</b>`}, // round cells, like Hole
   Player:{ui:"players",opts:MASTERS.players},
   Shot:{ui:"paint",layout:"seg",opts:["Tee","Approach","Chip","Putt"]},
   Stroke:{ui:"range",min:1,max:8,step:1,ticks:[1,2,3,4,5,6,7,8],marks:true,open:true,hint:"Stroke number on the hole: 1 is the tee shot, 8 means 8 or more"}, // "shots 1–5" stories
   Region:{ui:"paint",layout:"grid rgrid",opts:MASTERS_DATA.regions,label:o=>`<i class="sw" style="background:${SURFACE[o]}"></i><span>${o}</span>`}, // 8 surfaces, each with a swatch
   Sector:{ui:"paint",layout:"grid secmap",opts:MASTERS_DATA.sectors,label:o=>o.startsWith("Fairway")?o:o.replace("Greenside ","").replace(/^./,x=>x.toUpperCase()),cls:o=>o.startsWith("Fairway")?"fw":"",hint:"Where it landed: around the green (back at the top) or which side of the fairway"}, // greenside areas from the data; fairway side derived from the line of play
   Distance:{ui:"range",min:0,max:579.37,step:10,unit:" yd",ticks:[0,200,400,579.37],marks:true,markStep:50}, // yards, up to the longest shot; same look as Year
-  Score:{ui:"paint",layout:"grid hgrid",opts:MASTERS_DATA.scores,label:o=>`<b>${TO_PAR[o]}</b><span>${o}</span>`}, // number to par first
+  Score:{ui:"paint",layout:"grid scores",opts:MASTERS_DATA.scores,label:o=>`<i>${o==="Hole in One"?"Ace":TO_PAR[o]}</i><span style="--c:${SCORE_COL[MASTERS_DATA.scores.indexOf(o)]}">${{"Hole in One":"Ace","Double Bogey":"Double","Triple Bogey":"Triple+"}[o]||o}</span>`}, // one row, best to worst: round cells like Hole, the arc colour as a bar under the name
   Trophy:{ui:"paint",layout:"seg",opts:["Masters champion","Never won"]}};
-const HINT={paint:"Tap, or drag across to select several",range:"Drag the handles",players:"Drag along the letters, then tap or drag across players"};

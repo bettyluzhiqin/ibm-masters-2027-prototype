@@ -1,4 +1,3 @@
-const RESET_ICON='<svg viewBox="0 0 32 32"><path d="M18,28A12,12,0,1,0,6,16v6.2L2.4,18.6,1,20l6,6,6-6-1.4-1.4L8,22.2V16H8A10,10,0,1,1,18,26Z"/></svg>';
 // Render: every view from the state in S, the overview card, the game-focus card.
 /* ---------- render ---------- */
 function render(){
@@ -10,6 +9,7 @@ function render(){
   S.chapter=simChapter();window.sim?.update(S,v);
   sfx.set(S.volume,S.muted,v);
   stage.querySelectorAll("[data-v]").forEach(e=>e.hidden=!(e.dataset.v===v||(e.dataset.v==="tour"&&S.view==="tour")));
+  const near=$(".near");near.classList.toggle("idle",v==="idle");if(v==="idle")near.hidden=false; // Idle keeps the column for Sound only (css: .near.idle)
   const inTour=S.mode==="tour", c=chapter(), fp=v==="freeplay";
   // dock: fixed slots, contents swap with context
   const slot=(el,act,icon,label,enabled=true,on=false)=>{el.dataset.act=act;el.innerHTML=icon+(label?`<span>${label}</span>`:"");
@@ -18,9 +18,11 @@ function render(){
   if(S.mode==="breakout") slot(hero,"back",ICON.back,"Back to tour");
   else if(S.mode==="solo") slot(hero,"back",ICON.end,"End");
   else slot(hero,"breakout",ICON.freeplay,fp?"In Freeplay":"Freeplay",!fp); // the last chapter is Freeplay itself
-  // Reset view: in Freeplay a tile next to End; in a tour the quick-bar button, shown only once the visitor has moved the camera
-  $("#fpReset").hidden=!fp;if(fp)slot($("#fpReset"),"resetView",RESET_ICON,"Reset view");$("#qbReset").hidden=fp;
+  // Reset view lives in the view bar: always in Freeplay; in a tour only once the visitor has moved the camera (css: .cammoved)
+  $("#qbReset").classList.toggle("always",fp);
+  hero.hidden=fp&&inTour; // a Freeplay chapter: "In Freeplay" says nothing new, and Previous | Next need the room
   $("[data-act=next]").disabled=$("[data-act=prev]").disabled=!inTour;
+  $("#dock").classList.toggle("fpchapter",fp&&inTour); // a Freeplay chapter is still the tour: Previous | Next stay (css)
   // Next reads Finish on the very last step, so the end of the tour is never a surprise
   const lastStep=inTour&&S.ch===TOUR.chapters.length-1&&S.step>=steps(c)-1;
   $("[data-act=next]").innerHTML=lastStep?'<svg viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></svg><span>Finish</span>':'<svg viewBox="0 0 32 32"><path d="M18 6L16.57 7.393 24.15 15 4 15 4 17 24.15 17 16.57 24.573 18 26 28 16 18 6z"/></svg><span>Next</span>';
@@ -45,7 +47,7 @@ function render(){
   $("#miExit").textContent=solo?"End Freeplay…":"Exit tour…";
   $("#tpTitle").textContent=solo?"Start a tour":"Change tour";
   $("#tpNote").textContent=solo?"Pick the tour to start. Freeplay ends.":"The current tour is ticked.";
-  $("#more").hidden=S.menu!=="more"; if(S.menu==="more"){applyCtrl();applyScreenUI()}
+  $("#more").hidden=S.menu!=="more"; if(S.menu==="more")applyScreenUI()
   $("#tourPop").hidden=S.menu!=="tours";
   if(S.menu==="tours") $("#tpRows").replaceChildren(...tourRows(t=>{
     const solo=S.mode==="solo";
@@ -61,7 +63,8 @@ function render(){
   $("#qbNames").classList.toggle("on",S.display.names);
   $("#qbShots").classList.toggle("on",S.display.shots&&S.display.data==="Arcs"&&v!=="round");
   $("#qbBalls").classList.toggle("on",S.display.shots&&S.display.data==="Balls"&&v!=="round");
-  $("#qbShots").disabled=$("#qbBalls").disabled=v==="round";
+  $("#qbShots").disabled=$("#qbBalls").disabled=$("#qbKey").disabled=v==="round";
+  $("#qbKey").classList.toggle("on",S.display.key&&v!=="round");
   $("#navHint").hidden=!courseView; $("#navHint .nh:last-child").hidden=!fp;
   // camera views: bird's eye (straight down), orbit (slow turn), tee (behind the tee, looking down the hole)
   // Tee only makes sense in game focus (one hole, one player); elsewhere it falls back to Orbit
@@ -142,11 +145,12 @@ function flipCard(){
   const ov=$("#ov"),g=ov.cloneNode(true);g.removeAttribute("id");g.classList.remove("intro","cue","nexthole","flipin");g.classList.add("ghost");
   ov.after(g);g.addEventListener("animationend",e=>{if(e.target===g)g.remove()});setTimeout(()=>g.remove(),900); // only its own exit
   ov.classList.remove("flipin");void ov.offsetWidth;ov.classList.add("flipin");
+  const k=$("#ckey");k.classList.remove("flipin");void k.offsetWidth;k.classList.add("flipin"); // the key follows the card in
 }
 function renderOverview(v){
   const show=["round","filterset","freeplay"].includes(v),flipKey=S.view==="tour"&&S.mode==="tour"?`${TOUR.id}:${S.ch}`:"freeplay";
   if(show&&flipKey!==renderOverview.flipKey){if(renderOverview.flipKey&&!$("#overview").hidden)flipCard();renderOverview.flipKey=flipKey}
-  $("#overview").hidden=!show;if(!show)return;
+  $("#overview").hidden=!show;renderKey(v);if(!show)return;
   const c=chapter(),box=$("#ov");
   if(v==="round"){ // game focus: who, the scorecard through the sequence, this hole's shots
     const st=c.steps[S.step],fx=st.seq,hs=[...new Map(c.steps.map(x=>[x.hole,x])).values()]; // the chapter's holes, in order
@@ -187,18 +191,32 @@ function renderOverview(v){
   const figs=(s,sel,withShots,n)=>s?`<div class="figs" style="--n:${withShots?4:3}">`+(withShots?`<div class="fig"><b>${(n??0).toLocaleString()}</b><span>Shots</span></div>`:"")
     +(wholeHole(sel)?`<div class="fig"><b>${s.avgStrokes.toFixed(2)}</b><span>Scoring avg</span></div>`:`<div class="fig"><b>${s.avgYd} yd</b><span>Avg shot</span></div>`)
     +`<div class="fig"><b>${pctf(s.water)}</b><span>In water</span></div>`
-    +(s.holes===1?`<div class="fig"><b>${MASTERS_DATA.scores[s.dist.findIndex(d=>d>0)]??"—"}</b><span>Result</span></div>`:`<div class="fig"><b>${pctf(s.under)}</b><span>Birdie or better</span></div>`)+`</div>
+    +(s.holes===1?`<div class="fig"><b>${MASTERS_DATA.scores[s.dist.findIndex(d=>d>0)]??"—"}</b><span>Result</span></div>`:`<div class="fig"><b>${pctf(s.under)}</b><span>Under par</span></div>`)+`</div>
     `+bar(s,withShots):"";
   // the outcome bar is the key: each segment carries its to-par number (Ace for a hole in one); a comparison gets one
   // compact numbers-only key under both groups. Only scores that occur are shown; no words.
   const par=i=>i===0?"Ace":TO_PAR[MASTERS_DATA.scores[i]];
-  function bar(s,numbered){return `<div class="bar${numbered?" num":""}" title="${s.holes} player-holes">${s.dist.map((d,i)=>d?`<i style="flex:${d};--c:${SCORE_COL[i]}">${numbered&&d>=0.04?`<span>${par(i)}</span>`:""}</i>`:"").join("")}</div>`}
-  const present=[cnt.sa,compare?cnt.sb:null].filter(Boolean).reduce((m,s2)=>s2.dist.map((d,i)=>m[i]||d>0),[]);
-  const key=compare&&S.display.shots?`<div class="skey">${present.map((on,i)=>on?`<span><i style="background:${SCORE_COL[i]}"></i>${par(i)}</span>`:"").join("")}</div>`:"";
+  // average to par per player-hole, from the score mix (an ace counted as −2, the last bucket as +3)  ponytail: approximate at the ends; exact needs par per hole in stats()
+  const TP=[-2,-3,-2,-1,0,1,2,3],avgPar=s=>{const v=s.dist.reduce((a,d,i)=>a+d*TP[i],0);return Math.abs(v)<.005?"E":(v>0?"+":"−")+Math.abs(v).toFixed(2)};
+  function bar(s,numbered){return `<div class="bt">Average score <b>${avgPar(s)}</b></div><div class="bar${numbered?" num":""}" title="${s.holes} player-holes">${s.dist.map((d,i)=>d?`<i style="flex:${d};--c:${SCORE_COL[i]}">${numbered&&d>=0.04?`<span>${par(i)}</span>`:""}</i>`:"").join("")}</div>`}
   box.innerHTML=`${eb?`<div class="eb">${eb}</div>`:""}<div class="hl story">${story}</div>${ctx?`<div class="ctx">${ctx}</div>`:""}`+(compare
     ?[["A",f,cnt.a,cnt.sa],["B",fB,cnt.b,cnt.sb]].map(([g,gf,nn,st],i)=>`<div class="grp sec"><div class="gh"><i class="dot" style="background:${GROUP_COL[g]}"></i><b>${names.full[i]}</b><span class="n">${(nn??0).toLocaleString()} shots</span></div>${figs(st,gf,false)}</div>`).join("")
-    :`<div class="sec">${figs(cnt.sa,f,true,cnt.a)}</div>`)+key;
+    :`<div class="sec">${figs(cnt.sa,f,true,cnt.a)}</div>`);
   
+}
+// the colour key: a small card after the overview, naming the arc colours (score on the hole) that occur in the selection.
+// Data stories and Freeplay only (game focus colours by player); off by default, the quick bar's key button turns it on.
+// Rebuilt only when its content changes, so it doesn't re-enter on every render; it comes in with the card (css: .ckey.flipin)
+function renderKey(v){
+  const k=$("#ckey"),cnt=window.sim?.counts||{},compare=v==="freeplay"?S.compare:v==="filterset"&&!!chapter().filtersB;
+  const on=S.display.key&&S.display.shots&&(v==="filterset"||v==="freeplay")&&cnt.sa;
+  if(on&&k.hidden)k.classList.remove("flipin"); // turned on: in at once (the delayed entrance is only for a new chapter)
+  k.hidden=!on;if(!on){renderKey.html="";return}
+  const present=[cnt.sa,compare?cnt.sb:null].filter(Boolean).reduce((m,s2)=>s2.dist.map((d,i)=>m[i]||d>0),[]);
+  const name=i=>i===0?"Ace":MASTERS_DATA.scores[i].replace("Double Bogey","Double bogey").replace("Triple Bogey","Triple bogey+");
+  const arc=c=>`<svg viewBox="0 0 34 16"><path d="M2 14C8 5 17 2 32 2" stroke="${c}"/></svg>`; // an arc, as on the course
+  const html=`<div class="kt">Arc colours</div><div class="kl">${present.map((p,i)=>p?`<span>${arc(SCORE_COL[i])}<em>${name(i)}</em><b>${i===0?"":TO_PAR[MASTERS_DATA.scores[i]]}</b></span>`:"").join("")}</div>`;
+  if(html!==renderKey.html){k.innerHTML=html;renderKey.html=html}
 }
 // a chapter's first seconds, in screen order: the tour bar announces the chapter, the card fades in as a whole (css: .ov.flipin),
 // and the insight / video card comes in last. Runs at the very start of render(), before sim.update decides what is visible,

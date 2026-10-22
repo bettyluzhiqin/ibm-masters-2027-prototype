@@ -177,4 +177,16 @@ export function steer(dt) { // per frame: hold-zoom, then pan the grabbed spot i
     else { d.multiplyScalar(1 - Math.exp(-dt * 6)); camera.position.add(d); controls.target.add(d); }
   }
 }
+// where gestures may take the camera (only while the visitor steers; directed moves are never clamped): at least 3 m above
+// the terrain, no further out than a little past the whole-course view, and the point it turns around kept over the course
+let farDist = 0;
+export function clampView() {
+  if (!cam.user) return;
+  const t = controls.target, b = COURSE_BOX, lim = b.r * 1.1, dx = t.x - b.cx, dz = t.z - b.cz, d = Math.hypot(dx, dz);
+  if (d > lim) { const sx = b.cx + dx * lim / d - t.x, sz = b.cz + dz * lim / d - t.z; t.x += sx; t.z += sz; camera.position.x += sx; camera.position.z += sz; }
+  if (!farDist) { const w = preset("Orbit", null, COURSE_BOX); farDist = w.pos.distanceTo(w.target) * 1.15; }
+  const off = camera.position.clone().sub(t), dist = off.length();
+  if (dist > farDist) camera.position.copy(t).addScaledVector(off, farDist / dist);
+  const g = heightAt(camera.position.x, camera.position.z) + 3; if (camera.position.y < g) camera.position.y = g;
+}
 export const touchStatus = () => hold ? "hold-zoom" : recentre ? "recentring" : "";

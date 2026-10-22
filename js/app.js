@@ -17,7 +17,7 @@ document.querySelector("[data-act=more]").innerHTML=ICON.more;
 document.querySelector("[data-act=prev]").innerHTML='<svg viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></svg><span>Previous</span>';
 
 const S={view:"idle",ch:0,step:0,mode:"tour",muted:false,volume:70,
-  menu:null,fpFilter:null,filters:{},compare:false,panel:null,group:"A",filtersB:{},flyHole:null,frameTick:0,resetTick:0,display:{shots:true,names:false,data:"Arcs"}};
+  menu:null,fpFilter:null,filters:{},compare:false,panel:null,group:"A",filtersB:{},flyHole:null,frameTick:0,resetTick:0,display:{shots:true,names:false,data:"Arcs",key:false}};
 let resume=null;
 const $=s=>document.querySelector(s), stage=$("#stage");
 
@@ -51,11 +51,12 @@ const act={
   mute(){S.muted=!S.muted;render()},
   panelFilters(){S.panel=S.panel==="filters"?null:"filters";render()}, // one panel at a time
   toggleNames(){S.display.names=!S.display.names;render()},
+  toggleKey(){S.display.key=!S.display.key;render()}, // the colour key card under the overview
   // arcs / ball: pick how shots are drawn; tapping the one that is on hides the shots
   showArcs(){const on=S.display.shots&&S.display.data==="Arcs";S.display.shots=!on;S.display.data="Arcs";render()},
   // reset view: default camera for this chapter, framed on the selection, arcs only
   resetView(){if(S.mode==="tour"&&["filterset","round"].includes(view())){window.sim?.backToStory?.();toast("Back to the story");return} // a tour: back to the story's view
-    S.flyHole=null;S.display={shots:true,names:false,data:"Arcs"};S.panel=null;S.resetTick++;render();toast("View reset")}, // back to the whole course
+    S.flyHole=null;S.display={...S.display,shots:true,names:false,data:"Arcs"};S.panel=null;S.resetTick++;render();toast("View reset")}, // back to the whole course
   showBalls(){const on=S.display.shots&&S.display.data==="Balls";S.display.shots=!on;S.display.data="Balls";render()},
   breakout(){S.panel=null;resume={ch:S.ch,step:S.step};S.mode="breakout";render();toast("Freeplay")},
   back(){
@@ -77,7 +78,7 @@ function confirm(t,b,ok,fn,back=null){$("#cTitle").textContent=t;$("#cBody").tex
 
 // UI sound per action (audio.js); calm, wooden, outdoors
 const SOUND_FOR={handshake:"start",handshakeFp:"chime",next:"next",prev:"prev",breakout:"enter",back:"exit",
-  panelFilters:"toggle",toggleNames:"toggle",showArcs:"toggle",showBalls:"toggle",sound:"open",mute:"toggle",more:"open",askRestart:"open",askExit:"open",askChangeTour:"open",cancel:"close",confirm:"exit",sideLeft:"tick",sideRight:"tick"};
+  panelFilters:"toggle",toggleNames:"toggle",toggleKey:"toggle",showArcs:"toggle",showBalls:"toggle",sound:"open",mute:"toggle",more:"open",askRestart:"open",askExit:"open",askChangeTour:"open",cancel:"close",confirm:"exit",sideLeft:"tick",sideRight:"tick"};
 // actions that belong to an open menu; anything else (Next, Previous, Freeplay, Back to tour…) closes the menu first
 const MENU_ACTS=new Set(["more","sound","mute","askRestart","askChangeTour","askExit","sideLeft","sideRight","cancel","confirm"]);
 stage.addEventListener("click",e=>{const a=e.target.closest("[data-act]");if(a&&act[a.dataset.act]){e.stopPropagation();
@@ -99,17 +100,6 @@ stage.addEventListener("click",e=>{const a=e.target.closest("[data-act]");if(a&&
  $("#tlClear").onclick=e=>{e.stopPropagation();try{localStorage.removeItem("masters.tour")}catch{}S.tourList=true;sfx.play("close");render();toast("Default tour cleared")};}
 document.addEventListener("keydown",e=>{if(S.view==="idle"&&e.key==="f")act.handshakeFp();if(S.view!=="tour")return;if(e.key==="ArrowRight")act.next();if(e.key==="ArrowLeft")act.prev()});
 
-/* ---------- control height: 0 = lowest, 100 = highest, 50 = centred. Remembered on this screen ----------
-   Readout assumes the 110" mounting in the elevation drawing: screen bottom ~0.62 m, screen 1.37 m tall */
-const ctrlMem={get(){try{const v=+localStorage.getItem("masters.ctrl");return localStorage.getItem("masters.ctrl")==null?50:v}catch{return 50}},set(v){try{localStorage.setItem("masters.ctrl",v)}catch{}}};
-S.ctrl=ctrlMem.get();
-const CTRL_RANGE=620; // stage px either way from centre
-function applyCtrl(){
-  document.documentElement.style.setProperty("--ctrl-dy",((50-S.ctrl)/50*CTRL_RANGE)+"px");
-  $("#ctrlTrack .fill").style.cssText=`left:0;width:${S.ctrl}%`;$("#ctrlTrack .th").style.left=S.ctrl+"%";
-  requestAnimationFrame(()=>{const f=$("#frame").getBoundingClientRect(),top=$(".sidecol").getBoundingClientRect().top;
-    if(!$(".sidecol").offsetParent)return;const mm=620+(f.bottom-top)/f.height*(SCREEN_MM*9/16);$("#ctrlRead").textContent=`top ≈ ${(mm/1000).toFixed(2)} m`});
-}
 // screen: venue presets set the base size; UI size (0–100) fine-tunes it. Both remembered on this screen
 function applyScreenUI(){
   const mm=SCREEN_MM,p=Object.values(SCREENS).find(x=>x.mm===mm),pct=UI_SIZE;
@@ -127,14 +117,6 @@ function setScreen(mm,size=50){if(mm===SCREEN_MM&&size===UI_SIZE)return;applyScr
  t.onpointermove=e=>{if(drag)set(e)};
  t.onpointerup=t.onpointercancel=()=>{drag=false};
  t.onclick=e=>e.stopPropagation();}
-{const t=$("#ctrlTrack");let drag=false;
- const set=e=>{const r=t.getBoundingClientRect(),v=Math.round(Math.min(Math.max((e.clientX-r.left)/r.width,0),1)*20)*5;
-   if(v!==S.ctrl){S.ctrl=v;ctrlMem.set(v);applyCtrl();sfx.play("tickSoft")}};
- t.onpointerdown=e=>{drag=true;try{t.setPointerCapture(e.pointerId)}catch{}set(e)};
- t.onpointermove=e=>{if(drag)set(e)};
- t.onpointerup=t.onpointercancel=()=>{drag=false};
- t.onclick=e=>e.stopPropagation();}
-
 /* ---------- volume slider: drag anywhere on the track; dragging also unmutes ---------- */
 {const t=$("#volTrack");let drag=false;
  const set=e=>{const r=t.getBoundingClientRect();const nv=Math.round(Math.min(Math.max((e.clientX-r.left)/r.width,0),1)*20)*5;if(nv!==S.volume||S.muted){S.volume=nv;S.muted=false;render();sfx.play("tickSoft")}};
@@ -149,5 +131,3 @@ addEventListener("hole-tap",e=>{if(view()!=="freeplay")return;S.flyHole=e.detail
 [["#confirm",()=>{S.menu=S.confirmBack||null;S.confirmBack=null}],["#sound",()=>{S.menu=null}],["#more",()=>{S.menu=null}],["#tourPop",()=>{S.menu=null}],["#tourList",()=>{S.tourList=false}]].forEach(([sel,fn])=>{
   const b=document.createElement("button");b.className="phx xclose";b.innerHTML=ICON.close;b.setAttribute("aria-label","Close");b.onclick=e=>{e.stopPropagation();fn();sfx.play("close");render()};$(sel).prepend(b)});
 $("#fpClose").innerHTML=ICON.close;$("#fpClose").onclick=e=>{e.stopPropagation();S.panel=null;S.fpFilter=null;sfx.play("close");render()}; // same as tapping the open tile again
-$("#clearAll").onclick=e=>{e.stopPropagation();const t=F();Object.keys(t).forEach(k=>delete t[k]);sfx.play("toggle");live();renderFp()};
-$("#frameBtn").onclick=e=>{e.stopPropagation();S.flyHole=null;S.frameTick++;sfx.play("toggle");render()};

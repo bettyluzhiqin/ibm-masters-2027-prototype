@@ -26,4 +26,4 @@ addEventListener("sim-ready",()=>render());
     requestAnimationFrame(tick);
   })();
 })();
-addEventListener("resize",fit);fit();applyCtrl();renderFp();render();
+addEventListener("resize",fit);fit();renderFp();render();

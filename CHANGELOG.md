@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.4 · 22 Oct 2026
+
+### View controls
+- **Colour key** (off by default): a quick-bar toggle for a small card under the overview that names the arc colours (score on the hole), with arc-shaped swatches, best to worst. It appears at once when turned on, and comes in after the card on a new chapter. Data stories and Freeplay only.
+- The overview card's coloured bar now has a title: "Score on the hole · to par".
+- Compare is the same height as every other tile.
+- **Player filter** follows the Figma "Player Selection" design: every player in letter sections by surname, name cards four wide (selected = light), an A–Z index on the right that jumps the list (a dot marks letters with a selection), the list fading out at the bottom. No portraits yet.
+- **Serif panel titles** everywhere a panel is named: Volume, More (new title), the tour list, confirm dialogs; and the comparison group names on the overview card.
+- **Filter panel title**: the category icon and the name in the serif ("Hole · Group B" when comparing). Each filter has **Clear all** (that filter only) in its header beside ×, dimmed until something is set; the Clear all tile in the column clears every filter. No inner box and no "tap or drag" instructions: options sit straight on the panel.
+- **Filter panel is tall and narrow** (760 wide, was 1150): grids three or four across instead of long rows. Hole three across, Score and Round four, Player three, Region two.
+- **Hole filter**: numbers only, in round cells.
+- **Round filter**: 1–4 in the same round cells. **Score filter**: best to worst in two rows of four (Ace … −1, E … +3) in the same round cells (selected = white), each name with a short bar in its arc colour.
+- **Gesture limits**: while a visitor steers, the camera stays at least 3 m above the ground, no further out than a little past the whole-course view, and the point it turns around stays over the course (no panning into the void). Directed moves are untouched.
+- **Frame selection** is removed from the filter panel; Clear all takes its place. Choosing holes still frames them; Reset view goes back to the whole course.
+- **Overview**: the bar's title shows the average score to par ("Average score −0.50"); "Birdie or better" is now "Under par".
+- UI size can no longer push the presenter column off the screen: its scale stops at 0.865 (the tallest column, a comparing Freeplay chapter, just fits). The Control height setting is removed.
+- **Clear all** tile in the Freeplay grid's last slot (beside Players): clears every filter on the group being edited; dimmed when nothing is set.
+- A Freeplay chapter (e.g. the end of Ten Years at Augusta) keeps Previous | Next, in one row above the Freeplay group. Only solo Freeplay and break-outs drop them.
+- **Reset view** lives only in the view bar, with its own icon (frame corners around a centre point, so it never reads as undo or Previous). Always there in Freeplay; in a tour it appears once the camera has been moved. End / Back to tour now take the whole first row of the Freeplay group.
+
+### Idle
+- Sound stays on Idle, at the bottom of the column. The "Set up this screen" tour list sits beside the column so it never covers Sound, and steps aside while Volume is open. Sound comes in with the Freeplay button, after the title and call to action.
+- The tour chip is now a square **Tour** tile, grouped with Freeplay in the presenter column's place (light while its list is open); the tour list opens beside the group.
+
 ## v2.3 · 22 Oct 2026
 
 ### Freeplay
