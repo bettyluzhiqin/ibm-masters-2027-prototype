@@ -1,12 +1,13 @@
 // Game focus: a chapter's shots as tubes, shot by shot. Each step's shot draws in from the club with a ball at its head while the
 // camera rides beside it (slow at landing; low behind putts; leaning toward the winner when two players finish a hole).
-import { THREE, scene, camera, controls, director, K, FOVK, HOLES, V, V3, heightAt, clamp } from "./course.js";
+import { THREE, scene, camera, controls, director, K, FOVK, HOLES, V, V3, heightAt, clamp, tok } from "./course.js";
+import { GROUP_COL } from "./layers.js";
 import { flightModel, flightPoint, easeIO, io3 } from "./flight.js";
 import { cam, moving, pose } from "./camera.js";
 import { clearView } from "./clearance.js";
 
 export const focusGroup = new THREE.Group(); scene.add(focusGroup);
-const COL = { one: "#fff", A: "#3ddbd9", B: "#ff832b", drop: "#8d8d8d" };
+const COL = { one: tok("--mark"), A: GROUP_COL.A, B: GROUP_COL.B, drop: tok("--data-none") };
 let builtFor = null;
 const TUBE_R = 0.22, JOINT = new THREE.SphereGeometry(TUBE_R, 12, 8); // every shot the same width (putts were a third as wide)
 export let FOCUS = []; // per hole of the chapter: { hole, shots, shotsB }
@@ -53,14 +54,14 @@ export function showFocusStep(ch, step) {
 }
 
 /* Shot 0: the ball at its lie */
-const lieBall = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), new THREE.MeshBasicNodeMaterial({ color: "#fff" }));
+const lieBall = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), new THREE.MeshBasicNodeMaterial({ color: COL.one }));
 lieBall.visible = false; scene.add(lieBall);
 export function showLie(fs) { lieBall.visible = !!fs?.pre; if (fs?.pre) lieBall.position.copy(V3(fs.sh.from, .2)); }
 
 /* the flight: the current shot(s) draw in, a ball at the head, the camera riding behind and a little to the side */
 let flight = null;
 export const flightNow = () => flight;
-const heads = [0, 1].map(() => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 12), new THREE.MeshBasicNodeMaterial({ color: "#fff" })); b.visible = false; scene.add(b); return b; });
+const heads = [0, 1].map(() => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 12), new THREE.MeshBasicNodeMaterial({ color: COL.one })); b.visible = false; scene.add(b); return b; });
 export function startFlight(fs, follow) { // fs: showFocusStep's result; follow: the camera rides with the ball (Tee view)
   if (!fs.curs.length) return false;
   const fms = fs.curs.map(m => m.userData.fm), d = Math.max(...fms.map(f => Math.hypot(f.e[0] - f.s[0], f.e[2] - f.s[2]))), putt = fms.every(f => f.putt);

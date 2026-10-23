@@ -28,8 +28,7 @@ function render(){
   $("[data-act=next]").innerHTML=lastStep?'<svg viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></svg><span>Finish</span>':'<svg viewBox="0 0 32 32"><path d="M18 6L16.57 7.393 24.15 15 4 15 4 17 24.15 17 16.57 24.573 18 26 28 16 18 6z"/></svg><span>Next</span>';
   $("[data-act=prev]").disabled=!inTour||(S.ch===0&&S.step===0); // nothing before the first step
   const vol=S.muted?0:S.volume;
-  $("#muteBtn").innerHTML=vol===0?ICON.mute:vol<50?ICON.soundLow:ICON.sound;
-  $("#muteBtn").classList.toggle("on",S.menu==="sound");
+  for(const b of [$("#muteBtn"),$("#idleSound")]){b.innerHTML=vol===0?ICON.mute:vol<50?ICON.soundLow:ICON.sound;b.classList.toggle("on",S.menu==="sound")} // Idle has its own, in the Tour + Freeplay group
   $("#sound").hidden=S.menu!=="sound";
   $("#volVal").textContent=S.muted?"Muted":S.volume+"%";
   $("#volTrack .fill").style.cssText=`left:0;width:${S.volume}%`;$("#volTrack .th").style.left=S.volume+"%";
@@ -93,7 +92,7 @@ function render(){
   if(typeof tickerUpdate==="function")tickerUpdate()}
 // overview: one compact card. Tags show the filters; narrowed ones bright, "all" ones quiet
 // overview: what is selected, in plain words. Active filters as label/value rows; everything left at "all" on one quiet line
-const SEL_LABEL={Hole:"Hole",Year:"Year",Round:"Round",Player:"Player",Shot:"Shot",Stroke:"Strokes",Region:"Region",Sector:"Sector",Distance:"Distance",Score:"Score",Trophy:"Players"};
+const SEL_LABEL={Hole:"Hole",Year:"Year",Round:"Round",Player:"Player",Shot:"Shot",ShotPos:"Shot",Stroke:"Strokes",Region:"Region",Sector:"Sector",Distance:"Distance",Score:"Score",Trophy:"Champions"};
 function selValue(k,v){
   if(k==="Hole") return v.length===1?`${v[0]} · ${MASTERS.holes[v[0]-1].name}`:fmt("Hole",v);
   if(k==="Round") return v.map(r=>r.slice(1)).join(", ");
@@ -108,7 +107,7 @@ function selection(f,skipHole){ // skipHole: the single hole is shown by the hol
   const short=k=>k==="Hole"?(f.Hole.length===1?"Hole "+f.Hole[0]:"Holes "+fmt("Hole",f.Hole)):k==="Round"?"Round "+selValue(k,f[k]):k==="Year"?fmt("Year",f.Year):selValue(k,f[k]);
   const headline="";
   const rows=keys.map(k=>`<span class="k">${SEL_LABEL[k]}</span><span class="v">${selValue(k,f[k])}</span>`).join("");
-  const rest=[!f.Player&&"All players",!f.Year&&`${MASTERS.years[0]}–${MASTERS.years.at(-1)}`,!f.Round&&"All rounds",!f.Hole&&"All holes",!f.Shot&&"All strokes"].filter(Boolean).join(" · ");
+  const rest=[!f.Player&&"All players",!f.Year&&`${MASTERS.years[0]}–${MASTERS.years.at(-1)}`,!f.Round&&"All rounds",!f.Hole&&"All holes",!f.Shot&&!f.ShotPos&&"All strokes"].filter(Boolean).join(" · ");
   return {headline,rows,rest};
 }
 // audience cards: insight + video sit under the overview; when they would collide (a tall game-focus card, or a small
@@ -187,7 +186,7 @@ function renderOverview(v){
   const pctf=x=>x<0.01&&x>0?"<1%":Math.round(x*100)+"%";
   // which numbers: shots (single group; in a comparison it sits in the group header), scoring average when the story is
   // a whole hole, otherwise the average shot; water; birdie or better (or the result, for one player-hole)
-  const wholeHole=sel=>sel.Hole?.length===1&&!["Shot","Stroke","Distance","Region","Sector","Score"].some(k=>sel[k]);
+  const wholeHole=sel=>sel.Hole?.length===1&&!["Shot","ShotPos","Stroke","Distance","Region","Sector","Score"].some(k=>sel[k]);
   const figs=(s,sel,withShots,n)=>s?`<div class="figs" style="--n:${withShots?4:3}">`+(withShots?`<div class="fig"><b>${(n??0).toLocaleString()}</b><span>Shots</span></div>`:"")
     +(wholeHole(sel)?`<div class="fig"><b>${s.avgStrokes.toFixed(2)}</b><span>Scoring avg</span></div>`:`<div class="fig"><b>${s.avgYd} yd</b><span>Avg shot</span></div>`)
     +`<div class="fig"><b>${pctf(s.water)}</b><span>In water</span></div>`
@@ -197,7 +196,10 @@ function renderOverview(v){
   // compact numbers-only key under both groups. Only scores that occur are shown; no words.
   const par=i=>i===0?"Ace":TO_PAR[MASTERS_DATA.scores[i]];
   // average to par per player-hole, from the score mix (an ace counted as −2, the last bucket as +3)  ponytail: approximate at the ends; exact needs par per hole in stats()
-  const TP=[-2,-3,-2,-1,0,1,2,3],avgPar=s=>{const v=s.dist.reduce((a,d,i)=>a+d*TP[i],0);return Math.abs(v)<.005?"E":(v>0?"+":"−")+Math.abs(v).toFixed(2)};
+  const TP=[-2,-3,-2,-1,0,1,2,3],TP_NAME={"-3":"Albatross","-2":"Eagle","-1":"Birdie",0:"Par",1:"Bogey",2:"Double bogey",3:"Triple bogey"};
+  // the average in words: the two scores it falls between, nearest first (−0.19 → "Par–Birdie"); one name when it sits on a score
+  const avgPar=s=>{const v=Math.max(-3,Math.min(3,s.dist.reduce((a,d,i)=>a+d*TP[i],0))),n=Math.round(v);
+    if(Math.abs(v-n)<.05)return TP_NAME[n];return TP_NAME[n]+"–"+TP_NAME[v>n?n+1:n-1]};
   function bar(s,numbered){return `<div class="bt">Average score <b>${avgPar(s)}</b></div><div class="bar${numbered?" num":""}" title="${s.holes} player-holes">${s.dist.map((d,i)=>d?`<i style="flex:${d};--c:${SCORE_COL[i]}">${numbered&&d>=0.04?`<span>${par(i)}</span>`:""}</i>`:"").join("")}</div>`}
   box.innerHTML=`${eb?`<div class="eb">${eb}</div>`:""}<div class="hl story">${story}</div>${ctx?`<div class="ctx">${ctx}</div>`:""}`+(compare
     ?[["A",f,cnt.a,cnt.sa],["B",fB,cnt.b,cnt.sb]].map(([g,gf,nn,st],i)=>`<div class="grp sec"><div class="gh"><i class="dot" style="background:${GROUP_COL[g]}"></i><b>${names.full[i]}</b><span class="n">${(nn??0).toLocaleString()} shots</span></div>${figs(st,gf,false)}</div>`).join("")

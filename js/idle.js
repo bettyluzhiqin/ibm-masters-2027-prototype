@@ -3,7 +3,7 @@
 // then the call to action come in over it (css: #idleArea.enter)
 $("#idleFp").innerHTML=ICON.freeplay+"<span>Freeplay</span>";$("#idleFp").setAttribute("aria-label","Freeplay");
 $("#idleFp").onclick=e=>{e.stopPropagation();act.handshakeFp();sfx.play("chime")}; // not the Idle tap (that starts the tour)
-function idleIntro(){for(const el of [$("#idleArea"),$("#idleGrp"),$("#muteBtn").closest(".dock")]){el.classList.remove("enter");void el.offsetWidth;el.classList.add("enter")}}
+function idleIntro(){for(const el of [$("#idleArea"),$("#idleGrp")]){el.classList.remove("enter");void el.offsetWidth;el.classList.add("enter")}}
 function renderIdle(){
   const cur=chosenTour(),gone=tourMemory.get()&&!cur;
   $("#idleKicker").textContent=cur?"Today's tour":"Welcome to Augusta";
@@ -14,7 +14,7 @@ function renderTourPicker(){
   const mem=tourMemory.get(),cur=chosenTour(),first=!mem,gone=mem&&!cur,open=S.tourList||!cur;
   $("#tourList").hidden=!open||S.menu==="sound"; // one panel at a time: Volume opens over the same corner
   // the Tour tile: light while its list is open (the tour's name is Idle's headline)
-  $("#tourChip").innerHTML='<svg viewBox="0 0 32 32"><path d="M10 6H28V8H10zM10 15H28V17H10zM10 24H28V26H10zM4 6H7V8H4zM4 15H7V17H4zM4 24H7V26H4z"/></svg><span>Tour</span>';
+  $("#tourChip").innerHTML='<svg viewBox="0 0 32 32"><circle cx="7" cy="9" r="3"/><circle cx="7" cy="23" r="3"/><path d="M16 22H30V24H16zM16 8H30V10H16z"/></svg><span>Tour</span>';
   $("#tourChip").classList.toggle("on",open);$("#tourChip").setAttribute("aria-expanded",open);$("#tourChip").setAttribute("aria-label","Tour");
   $("#tlTitle").textContent=first?"Set up this screen":gone?"Choose a tour":"Tour";
   $("#tlNote").innerHTML=first?"Choose the tour this screen runs. It will be remembered."
@@ -34,3 +34,11 @@ function tourRows(pick){
     b.onclick=e=>{e.stopPropagation();pick(t)};
     return b});
 }
+// TEST (not the design yet): ?idlevideo plays the 6K flyover film on Idle over the live course.
+// The film is 5280 × 1890 (2.79:1); it fills the 16:9 stage, so its sides are cropped.
+// assets/idle-flyover.mp4 is a local link to Asset/ (1.1 GB, gitignored), so this only works locally.
+const IDLE_VIDEO=new URLSearchParams(location.search).has("idlevideo");
+if(IDLE_VIDEO){const v=el("video");v.dataset.v="idle";
+  Object.assign(v,{src:"assets/idle-flyover.mp4",muted:true,loop:true,playsInline:true,autoplay:true});
+  Object.assign(v.style,{position:"absolute",inset:"0",width:"100%",height:"100%",objectFit:"cover"});
+  stage.prepend(v)}

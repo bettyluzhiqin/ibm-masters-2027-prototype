@@ -12,6 +12,7 @@ function describe(f){
   if(f.Score&&f.Score.length<=2) subj=u("Score").map((x,i)=>i?SCORE_PL[x].toLowerCase():SCORE_PL[x]).join(" and ");
   else if(f.Shot?.length===1) subj=f.Shot[0]==="Tee"&&f.Distance?"Drives":SHOT_PL[u("Shot")[0]];
   if(f.Shot?.length===1&&f.Shot[0]==="Tee"&&f.Distance) used.add("Shot");
+  if(!subj&&f.ShotPos) subj=u("ShotPos")[0]==="First stroke"?"Tee shots":"Final strokes"; // Shot › first / last stroke on the hole
   const one=f.Player?.length===1;
   const bits=[];
   if(!subj&&one) subj=u("Player")[0];
@@ -38,7 +39,7 @@ function contextOf(f,used=new Set(),skip=new Set()){ // skip: what a comparison 
   if(!f.Player&&!f.Trophy&&!skip.has("Player")&&!skip.has("Trophy")) out.push("All players"); else if(f.Player&&!used.has("Player")) out.push(f.Player.length<=2?f.Player.join(", "):f.Player.length+" players");
   if(!f.Year){if(!skip.has("Year")) out.push(`${MASTERS.years[0]}–${MASTERS.years.at(-1)}`)} else if(!used.has("Year")) out.push(fmt("Year",f.Year));
   if(f.Round&&!used.has("Round")) out.push("Round "+f.Round.map(r=>r.slice(1)).join(", ")); else if(!f.Round&&!skip.has("Round")) out.push("All rounds");
-  for(const k of ["Shot","Stroke","Region","Sector","Distance","Score","Trophy"]) if(f[k]&&!used.has(k)) out.push(`${SEL_LABEL[k]} ${selValue(k,f[k])}`);
+  for(const k of ["Shot","ShotPos","Stroke","Region","Sector","Distance","Score","Trophy"]) if(f[k]&&!used.has(k)) out.push(`${SEL_LABEL[k]} ${selValue(k,f[k])}`);
   if(!f.Hole&&!skip.has("Hole")) out.push("All holes");
   return out.join(" · ");
 }

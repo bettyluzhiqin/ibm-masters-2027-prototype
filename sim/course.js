@@ -7,10 +7,11 @@ ifr.title = "Augusta National course"; ifr.style.border = "0";
 frame.prepend(ifr);
 // a veil over the course in the screen's night green: Idle fades through it from one hole to the next instead of flying
 export const veil = document.createElement("div");
-Object.assign(veil.style, { position: "absolute", inset: "0", background: "#08170f", opacity: "0", transition: "opacity .7s cubic-bezier(.2,0,.38,.9)", pointerEvents: "none" });
+Object.assign(veil.style, { position: "absolute", inset: "0", background: "var(--background)", opacity: "0", transition: "opacity .7s cubic-bezier(.2,0,.38,.9)", pointerEvents: "none" });
 ifr.after(veil);
 export const AW = await new Promise(res => { const t = setInterval(() => { const w = ifr.contentWindow; if (w?.app?.shots && w.director && w.world) { clearInterval(t); res(w); } }, 200); });
 export const THREE = AW.THREE, TSL = THREE.TSL;
+export const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim(); // colour tokens from css/app.css
 export const { scene, camera } = AW.app;
 export const director = AW.director, controls = director.controls, world = AW.world;
 

@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Masters Screen Wireframe · v2 merged</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=64">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.webgpu.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.webgpu.js","three/tsl":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.tsl.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"}}</script>
+<link rel="stylesheet" href="css/app.css?v=86">
 </head>
 <body>
 
@@ -27,6 +26,8 @@
     <div class="wire dock idlegrp" id="idleGrp">
       <button class="btn hero tool" id="tourChip"></button>
       <button class="btn hero go" id="idleFp"></button>
+      <div class="sep"></div>
+      <button class="btn" data-act="sound" aria-label="Volume" id="idleSound"></button>
     </div>
     <div class="wire tourlist" id="tourList" hidden><h3 id="tlTitle"></h3><p id="tlNote"></p><div id="tlRows"></div>
       <!-- list upkeep: pull the pinned tours from the iPad (Creation Console), or forget this screen's default tour -->
@@ -84,7 +85,7 @@
       <button class="qb" data-act="showArcs" id="qbShots" aria-label="Arcs"><svg viewBox="0 0 32 32" class="stroke"><path d="M5 27C8 15 16 8 27 6"/><path d="M9 28C12 18 18 12 27 10"/><path d="M13 29C15 21 20 16 27 14"/></svg></button>
       <button class="qb" data-act="showBalls" id="qbBalls" aria-label="Balls"><svg viewBox="0 0 32 32" class="stroke"><circle cx="16" cy="16" r="11"/><circle cx="12" cy="12" r="1.2" class="dot"/><circle cx="17" cy="11" r="1.2" class="dot"/><circle cx="21" cy="15" r="1.2" class="dot"/><circle cx="13" cy="17" r="1.2" class="dot"/><circle cx="18" cy="19" r="1.2" class="dot"/><circle cx="14" cy="22" r="1.2" class="dot"/></svg></button>
       <button class="qb" data-act="toggleKey" id="qbKey" aria-label="Colour key"><svg viewBox="0 0 32 32" class="stroke"><path d="M4 11c2-3.5 4.5-5 8-5"/><path d="M4 20c2-3.5 4.5-5 8-5"/><path d="M4 29c2-3.5 4.5-5 8-5"/><path d="M17 8h11M17 17h11M17 26h11"/></svg></button>
-      <button class="qb qbreset" data-act="resetView" id="qbReset" aria-label="Reset view"><svg viewBox="0 0 32 32" class="stroke"><path d="M4 11V4h7M21 4h7v7M28 21v7h-7M11 28H4v-7"/><circle cx="16" cy="16" r="3.2" class="dot"/></svg></button><!-- recentre: frame corners around a point, so it never reads as undo or Previous -->
+      <button class="qb qbreset" data-act="resetView" id="qbReset" aria-label="Reset view"><svg viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></svg></button><!-- recentre: Carbon center-to-fit, so it never reads as undo or Previous -->
     </div>
     <!-- camera options open right next to the Camera button -->
     <!-- the column in groups: tour (Next, Previous) | Freeplay + its Filters | settings (Sound, More) -->
@@ -146,8 +147,11 @@
     <div class="fpcol" id="fpcol">
 
       <div class="wire fp" id="fp">
-        <div class="ph phrow"><span id="fpTitle">Filters</span><span class="phact"><button class="link" id="fpClear">Clear all</button><button class="phx" id="fpClose" aria-label="Close filters"></button></span></div>
+        <!-- Filter v3: icon + serif title; the control; what is chosen + Clear all (this filter); × top-right -->
+        <div class="fph" id="fpHead"></div>
         <div id="fpBody"></div>
+        <div class="fpf"><span id="fpSum"></span><button class="link" id="fpClear">Clear all</button></div>
+        <button class="phx" id="fpClose" aria-label="Close filters"></button>
       </div>
     </div>
   </div>
@@ -175,14 +179,14 @@
 <script src="audio.js?v=8"></script>
 <script src="js/screen.js?v=4"></script>
 <script src="js/tours.js?v=4"></script>
-<script src="js/masters.js?v=7"></script>
-<script src="js/app.js?v=12"></script>
-<script src="js/freeplay.js?v=10"></script>
-<script src="js/render.js?v=33"></script>
-<script src="js/describe.js?v=1"></script>
-<script src="js/idle.js?v=7"></script>
+<script src="js/masters.js?v=12"></script>
+<script src="js/app.js?v=14"></script>
+<script src="js/freeplay.js?v=18"></script>
+<script src="js/render.js?v=36"></script>
+<script src="js/describe.js?v=2"></script>
+<script src="js/idle.js?v=13"></script>
 <script src="js/ticker.js?v=9"></script>
 <script src="js/loading.js?v=4"></script>
-<script type="module" src="sim.js?v=102"></script>
+<script type="module" src="sim.js?v=104"></script>
 </body>
 </html>

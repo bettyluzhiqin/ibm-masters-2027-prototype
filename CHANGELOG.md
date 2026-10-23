@@ -1,5 +1,92 @@
 # Changelog
 
+## v2.5 · 23 Oct 2026 (in progress)
+
+### Tokens
+- **Every colour is a token.** No hex values left in the CSS or JS outside the `:root` block; the code's new token names follow the Figma variables.
+- **Text on green buttons is warm white** (`--text`), not pure white. Figma's `action/on-primary` now points at `cream/50` to match.
+- The tour-list icon is Masters yellow, not Carbon yellow.
+- The leave-tour reds, the insight card's second line, the video progress track, the sector map and the loader glow use tokens (`--action-leave`, `--inverse-text-2`, `--map-*`).
+- **Data colours have one source:** `--score-hole-in-one` … `--score-triple-bogey`, `--group-a`, `--group-b`, `--data-none`, `--surface-*` in `css/app.css`. The cards, the colour key and the arcs on the course all read them (before, they were copied in three files).
+- The volume number uses Plex Light (300); weight 200 was never loaded.
+- Removed the unused Three.js import map left over from v1.
+- New check `checks/tokens.check.mjs`: fails on any colour literal outside `:root`.
+- `HANDOVER.md`: what the handover pack contains, with a status per item.
+
+### Type scale and spacing (Option A: the wall's sizes win)
+- **16 text sizes instead of about 50.** Serif: Idle title 160, Media title 108, Headline 94, Tour bar 84, Panel title 48, Small 40. Sans: Value 54, Figure 48, Lead 40, Body L 32, Body 29, Meta 26, Small 24, Eyebrow 21, Label 18, Annotation 16 (stage px at the Augusta preset; Innovation Studio ×1.1). Every font size in the CSS is a token (`--t-*`) divided by its block's zoom (`--z`), so text still follows the screen and UI-size settings.
+- Most text moved 0–5%. Bigger moves: tour bar step title −9% (52.8 → 48), menu items +7%, the tour list's "pinned · synced" line and the player cards +18% (20 → 24), the insight's second line +10% → Body L, the loading title −10% (120 → 108).
+- Serif is always weight 400: the confirm-dialog title (was 300) and the comparison group names (were 600).
+- The Mute row in Volume had no size of its own (it inherited the stage size through the zoom); now Body L.
+- **Spacing is a multiple of 4 px**: 90 values snapped (6, 10 → 8; 14, 18 → 16; 22, 26 → 24; 30, 34 → 32; 46 → 48). In-between values went to the nearest multiple of 8, so the presenter column keeps its height: the tallest column (a Freeplay chapter, comparing) still fits at UI size 100 (bottom at 2946 of 2970).
+- `checks/tokens.check.mjs` now also fails on a raw font size or off-grid spacing.
+
+### Freeplay filters: Filter v3 (the colleague's UI pass, Figma › Betty › Color / Filter v3)
+- **Every filter panel is rebuilt to the v3 design**: icon + Tiempos title; the control; the selection in short ("2, 3, 7", "Fairway, Green", "M. Brennan, C. Conners, +7") and CLEAR ALL at the foot; × top-right. Panels are 864 wide on the wall, 48 padding, radius 16; tiles radius 8 with 16 gaps.
+- **Hole**: All + 1–18 as square tiles, seven across. **Round**: four large tiles. **Sector**: labelled groups, Around the green (back, middle, front × left, centre, right) and Fairway (left, right).
+- **Region** and **Score**: colour tiles, the data colour along the top, filled when chosen (Region option 3). Score shows −3 … +3 with the name under it.
+- **Year, Strokes, Distance**: a range bar: the chosen span is cream with a grip at each end, a step mark per value along the bottom.
+- **Shot is now All strokes / First stroke / Last stroke** (choose one). First = the tee shot; last = the player's final stroke on the hole. Shot types (tee, approach, chip, putt) stay as tour story filters only.
+- **Champions** (was Trophy / Players): All players · Masters champion. "Never won" stays for the tour comparison that uses it.
+- **Player**: four name cards across, first name quiet, surname lead, the A–Z index on the right.
+- **The column**: square filter tiles (140 on the wall), the design's own icons above the label (assets/icons/filters, tinted in code). In a Freeplay chapter Previous | Next take the same columns.
+- Not in the data, so not shown yet: the v3 regions Cart Path and Margin, and Sector 201–225 yds.
+
+### Colour and type
+- **10 type sizes, down from 16.** Merged: video title 108 and tour-bar chapter title 84 → Headline 94; group names 40 → Panel title 48; volume number 54 → Figure 48; Body L 32 → Body 29; Eyebrow 21 → Label 18. Same in Figma (text styles and Screen › type/* variables).
+- **Average score reads as the two scores it falls between**, nearest first ("Par–Birdie") instead of a number.
+- **Filter tiles no longer show their value**; a set tile is light, and the panel footer and the card say what is chosen. The column is one even panel: 24 all round, 16 between rows, every row the tile height; 16 under each tile label.
+- **The v3 surfaces apply everywhere**: panels #193526 (the masters.com footer green), tiles #1C4932, quiet borders #2B5540; course surfaces to the v3 region colours; new `--score-other`, `--accent-active` (reserved). Compare groups stay teal / orange (no clash with the bogey blues); v3's comparison/a–d are kept for a future 3–4 group compare.
+- **Score colours are unchanged**: the v3 guide confirms them.
+- **The serif is Tiempos Headline**, the Masters' own (masters.com). It loads from the machine for now (Klim's trial is installed here); EB Garamond shows elsewhere until licensed web files are supplied. The sans stays IBM Plex.
+
+### Icons, corners and type: one rule each
+- **Icons are IBM Carbon 32, everywhere.** The filter tiles now use Carbon icons: flag, calendar, time, user, hashtag, layers, center--circle, ruler, subtract--alt and trophy. So do Compare (compare), Clear all (filter--remove), End compare (close), Reset view (center-to-fit) and the Tour tile (list--bulleted). Icons Carbon doesn't have are drawn in its style (32 grid, 2 px line): Shot (a ball on a tee), Arcs, Balls and Colour key.
+- **Three icon sizes**, as wall-px tokens: `--icon-lg` 64 in every button and tile, `--icon-md` 40 in panel headers and menu rows, and `--icon-sm` 32 for close, back, sync, the insight mark and the gesture hints. Before this there were 12 sizes, from 25 to 78.
+- **Corners follow v3 everywhere.**
+  - Panels (`.wire`, the filter panel) use `--rad-panel` 16.
+  - Buttons, tiles, chips, cards, the tour bar and the toast use `--rad-control` 8.
+  - Round marks are 50%, segments inside a control are 0, and small marks are 4.
+  - The old `--r` (22 px, scaled differently in every zoomed block) is gone.
+- **Only the 10 text styles.** Every weight now follows its style: serif 400, labels 500, figures 300, everything else 400. `<b>` no longer turns text bold. Eyebrows that were at meta size are now at label size (the insight's "Hole insight" and the video chapter's meta line). A row of four figures uses Text/Lead so they never touch. The shot label on the course is Text/Body, no longer caps with wide tracking.
+
+### Selection
+- **Selected is cream everywhere.** The open filter tile is now cream (it was a yellow outline). Chosen colour tiles in Score and Region are cream with their colour strip along the top (they used to fill with the colour). The current tour in the tour list is a cream row.
+- **A set filter gets a small yellow dot** in the top-right corner of its column tile (16 px, `--info`; with a dark edge when the tile is also open), instead of the whole tile turning cream.
+
+### Idle
+- **The Idle title sits low** (kicker, tour name, call to action; bottom 200 px above the screen edge) instead of in the middle, so the centre stays free for whatever plays behind it: the flyover film carries its own IBM × Masters lockup there.
+- **Sound joins the Idle group**: Tour, Freeplay, a divider, then Sound, in one group mid-column. Volume opens beside the group, where the tour list opens (the list steps aside). During a tour Sound is back in its place at the bottom of the column.
+
+### Idle film test
+- `?idlevideo` plays the 6K flyover film (`Asset/…Flyover_6KUpscale…mp4`, linked locally as `assets/idle-flyover.mp4`, gitignored) on Idle over the live course, filling the stage. It decodes at 60 fps with no dropped frames locally. The film is 5280 × 1890 (2.79:1), so filling the 16:9 stage crops its sides.
+- The IBM × Masters lockup is burned into the film's centre; the low Idle title (above) keeps clear of it.
+- Local only: 1.1 GB can't go to Vercel as is, and the dev server can't seek it.
+
+### Figma updated
+- **Design Handover 📦** section with one page per handover section; Design System and UX Flow Screen moved in as `↳ 2 · Components & tokens` and `↳ 3 · Screens`.
+- `Screen` variables: `type/*` renamed and resized to the 16-step scale, with CSS names as code syntax; `control/*` and `audience/*` set to the wall's sizes (button 169, panel 642, card 716, radius 19 / 25). Text styles regrouped as Display/* and Text/*, each bound to its `type/*` variable. The filter tiles (incl. Compare and Clear all) are all the button size now.
+- **↳ 0 · Contents & version**, **↳ 1 · System** (overview, colour swatches bound to the variables, type specimen on the text styles, spacing / corners / sizes), **↳ 4 · Rules** (scale, transitions, camera, touch, motion timings, tour bar and cards, presenter column), **↳ 6 · Content & data** (tour model, story types, words, glossary, data fields and figures, open questions, sound), **↳ 7 · Prototype & production notes** (where it lives, final vs stand-in, licences, performance, open questions). Dashed "Visual example to add" slots mark where a picture should go (14).
+- **↳ 5 · UX flow & edge states** (new): overview flow (Loading, Idle, tour chapters, Freeplay solo / break-out, panels over any state); detailed flows for Idle, More / Volume / confirm, the tour's step loop and chapter types, and Freeplay (Compare, the 11 filters, the course); 22 edge states marked in prototype / to design / open question; a button inventory of all 39 controls with where, when, what and sound.
+- Idle: the title block on S01 / S02 moved to the low position. The Idle column on *Presenter menu · as a whole* is now live layers (Tour tile, Freeplay, divider, Sound instances) instead of a screenshot. The Tour tile is the button size (169), like every other presenter button.
+- `action/on-primary` → `cream/50`. New: `action/leave-pressed`, `inverse/text-secondary`, `data/none`, `course/*` (bunker, fairway, green, pine straw, second cut, water), `region-map/*`. Score and group colours have their CSS names as code syntax.
+
+- **Handover pass, 23 Oct (late):** **↳ 3 · Screens** rebuilt as 32 screens captured from the prototype (Loading, Idle, Tour, Freeplay, edge states, adaptation), each with a spec card (what it is, components, rules, how to reach it). **↳ 2 · Components & tokens** gets an *All components & tokens* board beside the Filter v3 frames: every colour bound to its variable (Color, Data, Filter v3, Primitives), the 12 text styles, Carbon spacing / sizes / radii, the Screen sizes per preset, every component as instances (Filter v3, column and panels, course and audience, pre-v3 filters), and 9 "Code only" parts as captures. **↳ 1 · System**: every gap and padding bound to the v3 (Carbon) spacing variables, type specimen rebuilt for the 10 sizes, a new Spacing, sizes and corners section, the Filter v3 guides set beside it. The 14 "Visual example" slots on ↳ 4, ↳ 6 and ↳ 7 now hold captures, frame strips and (for sound) a drawn timeline.
+
+- Selection rule on ↳ 4 › presenter column; ↳ 2 Column gets a *Freeplay, filters set* variant, Tour list and the Score / Region panels re-exported; the affected screens on ↳ 3 re-captured.
+- **↳ 2 is now "Components", from the live prototype.** The old instances (round score cells, the earlier overview card, chip-style filters…) are gone from the handover. 39 components were rebuilt as editable layers straight from prototype v2.5 at wall size and grouped into sets: Idle (group, title block), Tour list (default, set up, change tour), Column (tour, Freeplay), Quick bar, Tour bar (video, chapter, rest, step), Overview card (data story, game focus, comparison, side by side, Freeplay, compare), Insight, Colour key, Shot video card, Video chapter, More, Volume, Confirm dialog, Filter panel (all 11 filters), Shot label, Gesture hints, Toast. Colours are bound to Color / Data, text to the text styles or Screen › type sizes; each card lists the tokens it uses. Tokens are shown only on ↳ 1 · System. Stale copy on ↳ 0, 5, 6, 7 updated (10 sizes, v3 filter tiles, Tour bar, average score as words, Tiempos).
+
+### Figma to update
+- The Display text styles still use EB Garamond: Tiempos Headline can't be loaded from here (only Sam's trial install). Switch them once the licensed font is in the Figma team.
+- Filter v3's own collection duplicates names in Color (surface/panel …): merge it into Color / Data so there is one set.
+- Sector panel in v3 has off-scale spacing (45 / 20 / 15) and a darker background; built on the 48 / 24 / 16 system like the others.
+- **The component and screen boards were replaced during the UI pass** (moved to Design Updates › ↳ Components & tokens from an older copy; ↳ 3 · Screens emptied). These 23 Oct edits are not in the current boards and need redoing there: Idle column as live layers (Tour, Freeplay, divider, Sound); Tour tile, Compare and Clear all bound to the button size and the filter-tile grid re-spaced; the green Freeplay fill on Idle; the Idle title moved low on S01 / S02; the v2.3 rules frame marked superseded. Variables and text styles are unaffected.
+- Apply the text styles to the components and screens: many text layers (e.g. the Tour bar) set their size directly, so they don't follow the new scale yet.
+- ↳ 3 · Screens are captures of the prototype, not live layers: rebuild them from components once the boards are current.
+- ↳ 2 components are flat layers (absolute positions) taken from the prototype: add auto layout and properties (selected, disabled…) as each is refined in Figma. The hole tags on the course aren't included (drawn by the sim).
+- The serif text on ↳ 2 is EB Garamond: the Display styles are on Test Tiempos, which this Figma account can't load.
+- Dock button has no green Freeplay variant (the Idle Freeplay has been green since v2.3); the Idle column uses a fill override until there is one.
+
 ## v2.4 · 22 Oct 2026
 
 ### View controls

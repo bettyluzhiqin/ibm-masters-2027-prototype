@@ -10,12 +10,16 @@ export const posOf = (i, a, b) => toW(at(i, a) / QN, at(i, b) / QN); // a shot's
 const ENUM = { Shot: ["type", ["Tee", "Approach", "Chip", "Putt"]], Score: ["score", D.scores], Region: ["region", D.regions], Sector: ["sector", D.sectors] };
 const PIDX = new Map(D.players.map((n, i) => [n, i]));
 const CHAMP = D.players.map(n => M.winners.includes(n));
+// each player's last stroke on each hole they played (Shot › Last stroke): the highest stroke number in that player-hole
+const holeKey = i => ((at(i, "year") * 5 + at(i, "round")) * 400 + at(i, "player")) * 19 + at(i, "hole");
+const LAST = new Map(); for (let i = 0; i < NSHOT; i++) { const k = holeKey(i), n = at(i, "stroke"); if (n > (LAST.get(k) || 0)) LAST.set(k, n); }
 function compile(f) {
   return Object.entries(f).map(([k, v]) => {
     if (k === "Hole") { const s = new Set(v.map(Number)); return i => s.has(at(i, "hole")); }
     if (k === "Round") { const s = new Set(v.map(r => +r.slice(1))); return i => s.has(at(i, "round")); }
     if (k === "Player") { const s = new Set(v.map(n => PIDX.get(n))); return i => s.has(at(i, "player")); }
     if (k === "Trophy") { const s = new Set(v.map(x => x === "Masters champion")); return i => s.has(CHAMP[at(i, "player")]); }
+    if (k === "ShotPos") return v[0] === "First stroke" ? i => at(i, "stroke") === 1 : i => at(i, "stroke") === LAST.get(holeKey(i));
     if (k === "Year") return i => { const y = at(i, "year") + 2000; return y >= v[0] && y <= v[1]; };
     if (k === "Distance") return i => { const d = at(i, "yd"); return d >= v[0] && d <= v[1]; };
     if (k === "Stroke") return i => { const n = at(i, "stroke"); return n >= v[0] && (v[1] >= 8 || n <= v[1]); };
@@ -43,7 +47,7 @@ export function stats(rows) { // the overview card's numbers
   let yd = 0, water = 0; const holes = new Map();
   for (const i of rows) {
     yd += at(i, "yd"); if (at(i, "region") === WATER) water++;
-    holes.set(((at(i, "year") * 5 + at(i, "round")) * 400 + at(i, "player")) * 19 + at(i, "hole"), [at(i, "score"), at(i, "count")]);
+    holes.set(holeKey(i), [at(i, "score"), at(i, "count")]);
   }
   const dist = Array(D.scores.length).fill(0); let n = 0, strokes = 0, m = 0;
   for (const [sc, c] of holes.values()) { if (sc >= 0) { dist[sc]++; n++; } if (c > 0) { strokes += c; m++; } }

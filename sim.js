@@ -169,7 +169,7 @@ function advance(dt) { // one frame of the data layer; the loop below calls it, 
 /* ---------- camera debug: what the camera is doing, in the black band beside the stage. On locally, off when deployed; ?debug=1 / ?debug=0, or the ` key ---------- */
 const dbg = document.createElement("pre");
 Object.assign(dbg.style, { position: "fixed", left: "12px", bottom: "12px", margin: "0", padding: "10px 12px", zIndex: "100", pointerEvents: "none",
-  font: "11px/1.5 'IBM Plex Mono', ui-monospace, Menlo, monospace", color: "#c8d2c6", background: "rgba(0,0,0,.6)", border: "1px solid #1f4230", whiteSpace: "pre" });
+  font: "11px/1.5 'IBM Plex Mono', ui-monospace, Menlo, monospace", color: "var(--text-2)", background: "rgba(var(--scrim-rgb),.6)", border: "1px solid var(--border-subtle)", whiteSpace: "pre" });
 const dbgParam = new URLSearchParams(location.search).get("debug"); // on locally, off on the deployed site; ?debug=1 / ?debug=0 override
 dbg.hidden = dbgParam ? dbgParam === "0" : !/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 document.body.append(dbg);

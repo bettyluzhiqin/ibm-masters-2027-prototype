@@ -130,4 +130,4 @@ addEventListener("hole-tap",e=>{if(view()!=="freeplay")return;S.flyHole=e.detail
 // the same close (x) on every panel that floats over the course: top-right corner, closes just that panel
 [["#confirm",()=>{S.menu=S.confirmBack||null;S.confirmBack=null}],["#sound",()=>{S.menu=null}],["#more",()=>{S.menu=null}],["#tourPop",()=>{S.menu=null}],["#tourList",()=>{S.tourList=false}]].forEach(([sel,fn])=>{
   const b=document.createElement("button");b.className="phx xclose";b.innerHTML=ICON.close;b.setAttribute("aria-label","Close");b.onclick=e=>{e.stopPropagation();fn();sfx.play("close");render()};$(sel).prepend(b)});
-$("#fpClose").innerHTML=ICON.close;$("#fpClose").onclick=e=>{e.stopPropagation();S.panel=null;S.fpFilter=null;sfx.play("close");render()}; // same as tapping the open tile again
+$("#fpClose").innerHTML=`<i class="fic" style="--ic:url(${new URL("assets/icons/filters/close.svg",location.href).href})"></i>`;$("#fpClose").onclick=e=>{e.stopPropagation();S.panel=null;S.fpFilter=null;sfx.play("close");render()}; // same as tapping the open tile again

@@ -11,21 +11,31 @@ const MASTERS=window.MASTERS;
 MASTERS.winners=[...new Set([...Object.values(MASTERS.champions),...MASTERS.earlierWinners])];
 
 // surface swatches for Region, and score as a number to par (Hole in One shows its 1 stroke)
-const SURFACE={"Bunker":"#e8dcc0","Fairway":"#3d7230","Green":"#6fb04f","Greenside bunker":"linear-gradient(#e8dcc0,#e8dcc0) padding-box,#6fb04f","Pine straw":"#8a5a35","Second cut":"#2c5424","Water":"#2d6fb3","Other":"#8d8d8d"};
+// colours are CSS tokens (css/app.css :root); tok() reads one for JS that needs the value, e.g. the course
+const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const SCORE_COL=MASTERS_DATA.scores.map(n=>tok("--score-"+n.toLowerCase().replace(/ /g,"-"))); // Hole in One → --score-hole-in-one
+const GROUP_COL={A:tok("--group-a"),B:tok("--group-b")};
+const SURFACE={"Bunker":"var(--surface-bunker)","Fairway":"var(--surface-fairway)","Green":"var(--surface-green)","Greenside bunker":"linear-gradient(90deg,var(--surface-bunker) 60%,var(--surface-green) 60%)","Pine straw":"var(--surface-pine-straw)","Second cut":"var(--surface-second-cut)","Water":"var(--surface-water)","Other":"var(--surface-other)"};
 const TO_PAR={"Hole in One":"1","Albatross":"−3","Eagle":"−2","Birdie":"−1","Par":"E","Bogey":"+1","Double Bogey":"+2","Triple Bogey":"+3"};
-// Every filter is multi-select. The control depends on the data:
-//  paint: short fixed sets; tap, or drag across to select several at once
-//  range: ordered numbers; drag two handles
-//  players: long list; A–Z surname rail (drag to scrub) + tiles for that letter, no typing
+// Filter v3 (Figma › Filter v3, 23 Oct). The control follows the data (how the selection logic differs):
+//  tiles:   choose any number; none = all. Hole (with an All tile), Round, Sector (grouped)
+//  color:   tiles with the data colour along the top, filled when chosen: Region, Score
+//  seg:     choose exactly one; the first option is "all": Shot (first / last stroke), Champions
+//  range:   two endpoints on ordered values: Year, Strokes, Distance
+//  players: the directory by surname with an A–Z index
+// label / icon: the column tile and panel header (assets/icons/filters/*.svg, IBM Carbon 32). Hidden filters have no tile: tours still use them
+const TITLE=o=>o.replace(/\b\w/g,c=>c.toUpperCase()); // Pine straw → Pine Straw, as the panels show them
 const FILTERS={
-  Hole:{ui:"paint",layout:"grid holes",opts:Array.from({length:18},(_,i)=>String(i+1)),label:o=>`<b>${o}</b>`}, // number only, round cells (css .holes)
-  Year:{ui:"range",min:MASTERS_DATA.years[0],max:MASTERS_DATA.years.at(-1),step:1,ticks:[2016,2019,2022,2026],marks:true}, // slider; a tick for every year, labels on a few
-  Round:{ui:"paint",layout:"grid rounds",opts:["R1","R2","R3","R4"],label:o=>`<b>${o.slice(1)}</b>`}, // round cells, like Hole
-  Player:{ui:"players",opts:MASTERS.players},
-  Shot:{ui:"paint",layout:"seg",opts:["Tee","Approach","Chip","Putt"]},
-  Stroke:{ui:"range",min:1,max:8,step:1,ticks:[1,2,3,4,5,6,7,8],marks:true,open:true,hint:"Stroke number on the hole: 1 is the tee shot, 8 means 8 or more"}, // "shots 1–5" stories
-  Region:{ui:"paint",layout:"grid rgrid",opts:MASTERS_DATA.regions,label:o=>`<i class="sw" style="background:${SURFACE[o]}"></i><span>${o}</span>`}, // 8 surfaces, each with a swatch
-  Sector:{ui:"paint",layout:"grid secmap",opts:MASTERS_DATA.sectors,label:o=>o.startsWith("Fairway")?o:o.replace("Greenside ","").replace(/^./,x=>x.toUpperCase()),cls:o=>o.startsWith("Fairway")?"fw":"",hint:"Where it landed: around the green (back at the top) or which side of the fairway"}, // greenside areas from the data; fairway side derived from the line of play
-  Distance:{ui:"range",min:0,max:579.37,step:10,unit:" yd",ticks:[0,200,400,579.37],marks:true,markStep:50}, // yards, up to the longest shot; same look as Year
-  Score:{ui:"paint",layout:"grid scores",opts:MASTERS_DATA.scores,label:o=>`<i>${o==="Hole in One"?"Ace":TO_PAR[o]}</i><span style="--c:${SCORE_COL[MASTERS_DATA.scores.indexOf(o)]}">${{"Hole in One":"Ace","Double Bogey":"Double","Triple Bogey":"Triple+"}[o]||o}</span>`}, // one row, best to worst: round cells like Hole, the arc colour as a bar under the name
-  Trophy:{ui:"paint",layout:"seg",opts:["Masters champion","Never won"]}};
+  Hole:{ui:"tiles",icon:"hole",cols:7,all:true,opts:Array.from({length:18},(_,i)=>String(i+1))},
+  Year:{ui:"range",icon:"year",min:MASTERS_DATA.years[0],max:MASTERS_DATA.years.at(-1),step:1},
+  Round:{ui:"tiles",icon:"round",cols:4,big:true,opts:["R1","R2","R3","R4"],name:o=>o.slice(1)},
+  Player:{ui:"players",icon:"player",opts:MASTERS.players},
+  ShotPos:{ui:"seg",icon:"shot",label:"Shot",opts:["All strokes","First stroke","Last stroke"]}, // first = the tee shot, last = the stroke that finished the hole
+  Stroke:{ui:"range",icon:"stroke",label:"Strokes",min:1,max:8,step:1,open:true}, // 8 means 8 or more
+  Region:{ui:"color",icon:"region",cols:4,opts:MASTERS_DATA.regions,name:TITLE,color:o=>SURFACE[o]},
+  Sector:{ui:"sectors",icon:"sector",opts:MASTERS_DATA.sectors},
+  Distance:{ui:"range",icon:"distance",min:0,max:579.37,step:10,unit:" yd",markStep:50},
+  Score:{ui:"color",icon:"score",cols:8,opts:MASTERS_DATA.scores,name:o=>o==="Hole in One"?"Ace":TO_PAR[o],caption:o=>({"Hole in One":"In one","Double Bogey":"Double","Triple Bogey":"Triple+"})[o]||o,
+    color:o=>SCORE_COL[MASTERS_DATA.scores.indexOf(o)]},
+  Trophy:{ui:"seg",icon:"trophy",label:"Champions",opts:["All players","Masters champion"]}, // tours also compare "Never won"
+  Shot:{hidden:true,opts:["Tee","Approach","Chip","Putt"]}}; // shot type: tours' story filters only (Approach shots into 13…)

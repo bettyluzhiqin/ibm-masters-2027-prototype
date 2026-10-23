@@ -1,11 +1,12 @@
 // What the data layer draws on the course besides game focus: the shot arcs (and balls).
-import { AW, THREE, TSL, scene, D, HOLES, heightAt, withUp } from "./course.js";
+import { AW, THREE, TSL, scene, D, HOLES, heightAt, withUp, tok } from "./course.js";
 import { at, posOf } from "./shots.js";
 import { flightModel, flightPoint } from "./flight.js";
 const { Fn, If, Discard, attribute, uniform, vec4, vec3, mix, smoothstep } = TSL;
 
-export const SCORE_COL = ["#d4bbff", "#ee5396", "#ffafd2", "#f1c21b", "#f6f2ff", "#82cfff", "#78a9ff", "#4589ff"];
-export const GROUP_COL = { A: "#3ddbd9", B: "#ff832b" }; // IBM Teal 30 / Orange 40: hues the score colours never use
+export const SCORE_COL = ["hole-in-one", "albatross", "eagle", "birdie", "par", "bogey", "double-bogey", "triple-bogey"].map(n => tok("--score-" + n)); // colours are tokens in css/app.css, in score order
+export const GROUP_COL = { A: tok("--group-a"), B: tok("--group-b") };
+const NONE = tok("--data-none");
 /* ---------- arcs: one draw call, drawn in by the shader (TSL) ---------- */
 const ARC_RATE = 0.32;                 // the draw-in takes ~3.5 s
 const uProg = uniform(0), uAlpha = uniform(0.55);
@@ -68,7 +69,7 @@ function stepArcs() {
   for (; job.i < end; job.i++) {
     const [i, gc] = items[job.i], [fx, fz] = posOf(i, "fx", "fz"), [tx, tz] = posOf(i, "tx", "tz"), type = at(i, "type"), yt = heightAt(tx, tz);
     const fm = flightModel({ tee: type === 0, putt: type === 3, toLie: D.regions[at(i, "region")] }, [fx, heightAt(fx, fz) + .09, fz], [tx, yt + .09, tz], HOLES[at(i, "hole") - 1].line, heightAt);
-    c.set(gc || SCORE_COL[at(i, "score")] || "#8d8d8d");
+    c.set(gc || SCORE_COL[at(i, "score")] || NONE);
     const delay = (job.i / Math.max(total, 1)) * 0.4;
     if (thick) tube(fm, c, delay); else for (let k = 0; k < SEGS; k++) for (const t of [k / SEGS, (k + 1) / SEGS]) {
       flightPoint(fm, t, p, heightAt); pos.set(p, job.v * 3); col.set([c.r, c.g, c.b], job.v * 3); aT[job.v] = t; dl[job.v] = delay; job.v++;

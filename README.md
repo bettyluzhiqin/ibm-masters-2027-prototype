@@ -27,7 +27,7 @@ Code, by job:
 | `sim/clearance.js` | Keeps the camera's view clear of the pines (the course's tree survey) |
 | `audio.js` | Synthesised UI sounds and ambient bed |
 | `data/` | Export from the IBM Masters Data API database (2016–2026), made by `data/export_masters.py` |
-| `checks/` | `node checks/flight.check.mjs`, `node checks/tours.check.mjs`, `node checks/css.check.mjs` |
+| `checks/` | `node checks/flight.check.mjs`, `node checks/tours.check.mjs`, `node checks/css.check.mjs`, `node checks/tokens.check.mjs` (no colour literals outside `:root`) |
 
 Camera debug: a readout in the black band beside the stage shows what the camera is doing. It is on locally and off on the deployed site; `?debug=1` / `?debug=0` override it, and the ` key toggles it.
 
